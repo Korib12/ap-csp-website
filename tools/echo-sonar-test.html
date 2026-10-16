@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Echo — Sonar Hardware Test</title>
+<style>
+  :root {
+    --bg: #070b14;
+    --panel: #0d1420;
+    --panel-edge: #1b2942;
+    --ink: #e8eef7;
+    --ink-dim: #7d8ba3;
+    --ink-faint: #4a5a72;
+    --live: #35e0a1;
+    --live-dim: #1a7a5c;
+    --warn: #f2b03d;
+    --stop: #ff5d6c;
+    --trace: #6fa8ff;
+    --mono: "SF Mono", "JetBrains Mono", "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  body {
+    max-width: 640px; margin: 0 auto; padding: 18px 16px 40px;
+    min-height: 100vh;
+  }
+  header { margin-bottom: 16px; }
+  .title { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; display: flex; align-items: baseline; gap: 10px; }
+  .title .sub { font-size: 12px; font-weight: 500; color: var(--ink-dim); letter-spacing: 0; }
+  .lede { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-dim); max-width: 60ch; }
+
+  .stage {
+    position: relative;
+    background: #04060c;
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 16px 0 10px;
+  }
+  canvas { display: block; width: 100%; height: 300px; }
+  .axis {
+    position: absolute; right: 8px; top: 6px;
+    font-family: var(--mono); font-size: 10px; color: var(--ink-dim);
+    text-align: right; line-height: 1.4; pointer-events: none;
+    text-shadow: 0 0 6px #000;
+  }
+  .axis .band { color: var(--live); }
+  .tone-line-label {
+    position: absolute; left: 8px;
+    font-family: var(--mono); font-size: 10px; color: var(--warn);
+    pointer-events: none; text-shadow: 0 0 6px #000;
+    transition: top 0.15s;
+  }
+
+  .readouts {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-bottom: 14px;
+  }
+  .cell {
+    background: var(--panel); border: 1px solid var(--panel-edge);
+    border-radius: 8px; padding: 9px 11px;
+  }
+  .cell .k { font-size: 10px; color: var(--ink-dim); margin-bottom: 3px; }
+  .cell .v { font-family: var(--mono); font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
+  .cell .v small { font-size: 11px; color: var(--ink-dim); font-weight: 400; }
+  #peakCell .v { color: var(--trace); }
+  #lockCell .v { color: var(--ink-dim); }
+  #lockCell.good .v { color: var(--live); }
+  #lockCell.weak .v { color: var(--warn); }
+
+  .controls { display: flex; flex-direction: column; gap: 14px; }
+  .btn {
+    appearance: none; border: none; cursor: pointer;
+    font-family: var(--sans); font-size: 16px; font-weight: 600;
+    padding: 15px; border-radius: 10px; width: 100%;
+    background: var(--live); color: #032417; transition: background 0.15s, transform 0.05s;
+  }
+  .btn:active { transform: scale(0.99); }
+  .btn.running { background: var(--stop); color: #2a0007; }
+  .btn:disabled { background: #16202f; color: var(--ink-dim); cursor: default; }
+
+  .slider-row { display: flex; flex-direction: column; gap: 7px; }
+  .slider-row .lab { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-dim); }
+  .slider-row .lab b { font-family: var(--mono); color: var(--ink); font-weight: 600; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: var(--panel-edge); border-radius: 3px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--trace); cursor: pointer; border: 3px solid var(--bg);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--trace); cursor: pointer; border: 3px solid var(--bg);
+  }
+
+  .status {
+    font-family: var(--mono); font-size: 12px; color: var(--ink-dim);
+    padding: 10px 12px; background: var(--panel); border: 1px solid var(--panel-edge);
+    border-radius: 8px; min-height: 38px; display: flex; align-items: center;
+  }
+  .status.err { color: var(--stop); border-color: #40161c; }
+
+  .guide { margin-top: 22px; }
+  .guide h2 { font-size: 13px; font-weight: 650; margin: 0 0 4px; }
+  .guide p { font-size: 12.5px; line-height: 1.55; color: var(--ink-dim); margin: 0 0 14px; max-width: 62ch; }
+  .test { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--panel-edge); }
+  .test .n {
+    flex: none; width: 26px; height: 26px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--panel-edge);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 13px; color: var(--trace); font-weight: 600;
+  }
+  .test .body { font-size: 12.5px; line-height: 1.5; }
+  .test .body b { color: var(--ink); font-weight: 600; }
+  .test .body .pass { color: var(--live); }
+  .verdict {
+    margin-top: 18px; padding: 14px; border-radius: 10px;
+    background: linear-gradient(180deg, #0c1a16, #0a1512);
+    border: 1px solid var(--live-dim); font-size: 12.5px; line-height: 1.55; color: var(--ink);
+  }
+  .verdict b { color: var(--live); }
+</style>
+</head>
+<body>
+<header>
+  <div class="title">Echo <span class="sub">sonar hardware test · stage 1</span></div>
+  <p class="lede">Emits an inaudible tone and shows the microphone spectrum around it. The goal is not breathing yet — it's to confirm your phone can transmit and hear ultrasound cleanly. Run this on both phones before committing.</p>
+</header>
+
+<div class="stage">
+  <canvas id="spec"></canvas>
+  <div class="axis" id="axis"></div>
+  <div class="tone-line-label" id="toneLabel">— emitted</div>
+</div>
+
+<div class="readouts">
+  <div class="cell"><div class="k">emitting</div><div class="v" id="emitV">—<small> Hz</small></div></div>
+  <div class="cell" id="peakCell"><div class="k">strongest bin</div><div class="v" id="peakV">—<small> Hz</small></div></div>
+  <div class="cell" id="lockCell"><div class="k">tone lock</div><div class="v" id="lockV">idle</div></div>
+</div>
+
+<div class="controls">
+  <button class="btn" id="go">Start test</button>
+  <div class="slider-row">
+    <div class="lab"><span>Emit frequency</span><b id="freqLab">18500 Hz</b></div>
+    <input type="range" id="freq" min="16000" max="21000" step="100" value="18500">
+  </div>
+  <div class="slider-row">
+    <div class="lab"><span>Emit volume</span><b id="volLab">30%</b></div>
+    <input type="range" id="vol" min="0" max="100" step="1" value="30">
+  </div>
+  <div class="status" id="status">Idle. Tap “Start test” and allow microphone access.</div>
+</div>
+
+<div class="guide">
+  <h2>What you're checking</h2>
+  <p>Read the spectrogram bottom-to-top as low-to-high frequency; time scrolls right to left; brightness is energy. A working phone shows a steady bright horizontal line exactly at the emit frequency (the orange marker). That line is your sonar carrier — everything in Echo rides on it.</p>
+
+  <div class="test">
+    <div class="n">1</div>
+    <div class="body"><b>See the carrier.</b> Start the test and hold the phone still. <span class="pass">Pass:</span> a crisp, stable bright line sits right at the orange marker. If the line is missing, smeared, or flickers wildly even when still, this phone's speaker/mic can't hold the band — note it and try the other phone or a lower frequency.</div>
+  </div>
+  <div class="test">
+    <div class="n">2</div>
+    <div class="body"><b>See the Doppler.</b> Keep the phone still and slowly wave your hand 15–30 cm above it. <span class="pass">Pass:</span> the line briefly fattens or grows fuzzy sidebands as your hand moves — that blur is the reflected echo shifting frequency. This is the effect breathing will make, only far bigger. If a moving hand does nothing at all, the mic isn't picking up the reflection.</div>
+  </div>
+  <div class="test">
+    <div class="n">3</div>
+    <div class="body"><b>Find the quiet range.</b> Prop the phone ~30 cm from your chest, stay still, and breathe deeply. <span class="pass">Pass:</span> a faint slow shimmer on the line synced to your breath. This one is hard and hardware-dependent — treat it as bonus, not the gate. Tests 1 and 2 are the real go/no-go.</div>
+  </div>
+
+  <div class="verdict">
+    <b>Green light</b> if tests 1 and 2 pass on both phones: your hardware cooperates and Echo is worth committing to. If test 1 fails on both even after lowering the frequency, that's your signal to fall back to <b>Pulse</b> (rPPG) — same pipeline, friendlier hardware.
+  </div>
+</div>
+
+<script>
+(function () {
+  const cvs = document.getElementById('spec');
+  const ctx = cvs.getContext('2d', { alpha: false });
+  const goBtn = document.getElementById('go');
+  const freqEl = document.getElementById('freq');
+  const volEl = document.getElementById('vol');
+  const freqLab = document.getElementById('freqLab');
+  const volLab = document.getElementById('vol' + 'Lab') || document.getElementById('volLab');
+  const emitV = document.getElementById('emitV');
+  const peakV = document.getElementById('peakV');
+  const lockV = document.getElementById('lockV');
+  const lockCell = document.getElementById('lockCell');
+  const axisEl = document.getElementById('axis');
+  const toneLabel = document.getElementById('toneLabel');
+  const statusEl = document.getElementById('status');
+
+  // Display band: we zoom the spectrogram into the ultrasonic region so tiny
+  // Doppler shifts are visible instead of being one pixel in a 0–24kHz view.
+  const BAND_LO = 15000;
+  let BAND_HI = 22050; // clamped to Nyquist once we know the sample rate
+
+  let audioCtx = null, osc = null, gain = null, analyser = null, micStream = null, srcNode = null;
+  let freqData = null, running = false, raf = null;
+  let sampleRate = 48000, binHz = 1, loBin = 0, hiBin = 0;
+
+  // ---- canvas sizing (device-pixel aware) ----
+  let W = 0, H = 0, dpr = 1;
+  function sizeCanvas() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = cvs.getBoundingClientRect();
+    W = Math.round(rect.width * dpr);
+    H = Math.round(rect.height * dpr);
+    cvs.width = W; cvs.height = H;
+    ctx.fillStyle = '#04060c';
+    ctx.fillRect(0, 0, W, H);
+  }
+  window.addEventListener('resize', () => { if (cvs.width) sizeCanvas(); });
+
+  // ---- inferno-ish colour map for energy (scientific, high-contrast) ----
+  function colour(v) { // v in 0..1
+    v = Math.max(0, Math.min(1, v));
+    const r = Math.min(255, Math.max(0, 255 * (1.4 * v - 0.1)));
+    const g = Math.min(255, Math.max(0, 255 * (1.7 * v * v - 0.2)));
+    const b = Math.min(255, Math.max(0, 255 * (Math.sin(v * Math.PI) * 0.5 + v * v * v * 0.9)));
+    return [r, g, b];
+  }
+
+  function freqToY(f) {
+    const frac = (f - BAND_LO) / (BAND_HI - BAND_LO);
+    return H - frac * H; // low freq at bottom
+  }
+
+  function drawAxis() {
+    let html = '';
+    for (let f = 16000; f <= BAND_HI; f += 2000) {
+      html += (f / 1000) + 'k<br>';
+    }
+    html = '<span class="band">' + Math.round(BAND_HI/1000) + 'k (Nyquist)</span><br>' + html;
+    axisEl.innerHTML = html;
+  }
+
+  function updateToneMarker() {
+    const f = +freqEl.value;
+    const rect = cvs.getBoundingClientRect();
+    const frac = (f - BAND_LO) / (BAND_HI - BAND_LO);
+    const yCss = rect.height - frac * rect.height;
+    toneLabel.style.top = Math.max(2, Math.min(rect.height - 14, yCss - 6)) + 'px';
+  }
+
+  function renderColumn() {
+    if (!running) return;
+    analyser.getByteFrequencyData(freqData);
+
+    // scroll left by shifting the existing image
+    const prev = ctx.getImageData(1, 0, W - 1, H);
+    ctx.putImageData(prev, 0, 0);
+
+    // draw newest column at the right edge
+    const col = ctx.createImageData(1, H);
+    let peakBin = loBin, peakVal = 0, bandEnergy = 0, totalEnergy = 1;
+    for (let b = loBin; b <= hiBin; b++) {
+      const v = freqData[b];
+      if (v > peakVal) { peakVal = v; peakBin = b; }
+      bandEnergy += v;
+    }
+    // map band bins → vertical pixels
+    for (let y = 0; y < H; y++) {
+      const frac = (H - y) / H;                       // 0 at bottom
+      const f = BAND_LO + frac * (BAND_HI - BAND_LO);
+      const bin = Math.round(f / binHz);
+      const v = (bin >= 0 && bin < freqData.length) ? freqData[bin] / 255 : 0;
+      const [r, g, bl] = colour(v);
+      const i = y * 4;
+      col.data[i] = r; col.data[i+1] = g; col.data[i+2] = bl; col.data[i+3] = 255;
+    }
+    ctx.putImageData(col, W - 1, 0);
+
+    // readouts
+    const peakHz = Math.round(peakBin * binHz);
+    peakV.innerHTML = peakHz + '<small> Hz</small>';
+
+    // tone-lock quality: how concentrated is energy at the emitted bin
+    const emitBin = Math.round((+freqEl.value) / binHz);
+    let near = 0;
+    for (let b = emitBin - 2; b <= emitBin + 2; b++) if (b>=0&&b<freqData.length) near += freqData[b];
+    const ratio = bandEnergy > 0 ? near / bandEnergy : 0;
+    lockCell.classList.remove('good','weak');
+    if (peakVal > 40 && ratio > 0.35) { lockV.textContent = 'locked'; lockCell.classList.add('good'); }
+    else if (peakVal > 20) { lockV.textContent = 'weak'; lockCell.classList.add('weak'); }
+    else { lockV.textContent = 'no tone'; }
+
+    raf = requestAnimationFrame(renderColumn);
+  }
+
+  async function start() {
+    try {
+      statusEl.classList.remove('err');
+      statusEl.textContent = 'Requesting microphone…';
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      sampleRate = audioCtx.sampleRate;
+      BAND_HI = Math.min(22050, sampleRate / 2);
+
+      // CRITICAL: disable the phone's voice DSP or it will erase the ultrasound.
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          channelCount: 1
+        }
+      });
+
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 8192;
+      analyser.smoothingTimeConstant = 0.35;
+      freqData = new Uint8Array(analyser.frequencyBinCount);
+      binHz = sampleRate / analyser.fftSize;
+      loBin = Math.floor(BAND_LO / binHz);
+      hiBin = Math.ceil(BAND_HI / binHz);
+
+      srcNode = audioCtx.createMediaStreamSource(micStream);
+      srcNode.connect(analyser);
+
+      // emit the carrier tone
+      osc = audioCtx.createOscillator();
+      gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = +freqEl.value;
+      gain.gain.value = (+volEl.value) / 100 * 0.5;
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start();
+
+      sizeCanvas();
+      drawAxis();
+      updateToneMarker();
+
+      running = true;
+      goBtn.textContent = 'Stop test';
+      goBtn.classList.add('running');
+      emitV.innerHTML = (+freqEl.value) + '<small> Hz</small>';
+      statusEl.textContent = 'Running · sample rate ' + sampleRate + ' Hz · bin ' + binHz.toFixed(1) + ' Hz. Hold still, then try test 2.';
+      renderColumn();
+    } catch (e) {
+      statusEl.classList.add('err');
+      statusEl.textContent = 'Could not start: ' + (e && e.message ? e.message : e) + '. Mic access must be allowed, and the page should be opened over https or localhost.';
+      stop(true);
+    }
+  }
+
+  function stop(silent) {
+    running = false;
+    if (raf) cancelAnimationFrame(raf);
+    try { if (osc) osc.stop(); } catch (e) {}
+    if (micStream) micStream.getTracks().forEach(t => t.stop());
+    if (audioCtx) audioCtx.close();
+    osc = gain = analyser = micStream = srcNode = audioCtx = null;
+    goBtn.textContent = 'Start test';
+    goBtn.classList.remove('running');
+    lockCell.classList.remove('good','weak');
+    lockV.textContent = 'idle';
+    if (!silent) statusEl.textContent = 'Stopped.';
+  }
+
+  goBtn.addEventListener('click', () => { running ? stop() : start(); });
+
+  freqEl.addEventListener('input', () => {
+    freqLab.textContent = freqEl.value + ' Hz';
+    if (osc) osc.frequency.value = +freqEl.value;
+    emitV.innerHTML = (+freqEl.value) + '<small> Hz</small>';
+    updateToneMarker();
+  });
+  volEl.addEventListener('input', () => {
+    document.getElementById('volLab').textContent = volEl.value + '%';
+    if (gain) gain.gain.value = (+volEl.value) / 100 * 0.5;
+  });
+
+  // init labels/marker at load
+  freqLab.textContent = freqEl.value + ' Hz';
+  document.getElementById('volLab').textContent = volEl.value + '%';
+  sizeCanvas(); drawAxis(); updateToneMarker();
+})();
+</script>
+</body>
+</html>

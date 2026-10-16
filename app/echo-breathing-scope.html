@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Echo — Breathing Scope</title>
+<style>
+  :root {
+    --bg: #070b14;
+    --panel: #0d1420;
+    --panel-edge: #1b2942;
+    --ink: #e8eef7;
+    --ink-dim: #7d8ba3;
+    --ink-faint: #4a5a72;
+    --live: #35e0a1;
+    --live-dim: #1a7a5c;
+    --warn: #f2b03d;
+    --stop: #ff5d6c;
+    --trace: #6fa8ff;
+    --breath: #35e0a1;
+    --mono: "SF Mono", "JetBrains Mono", "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+  body { max-width: 640px; margin: 0 auto; padding: 18px 16px 44px; min-height: 100vh; }
+  header { margin-bottom: 14px; }
+  .title { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; display: flex; align-items: baseline; gap: 10px; }
+  .title .sub { font-size: 12px; font-weight: 500; color: var(--ink-dim); }
+  .lede { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-dim); max-width: 60ch; }
+
+  /* big breathing readout */
+  .bpm {
+    display: flex; align-items: baseline; gap: 14px;
+    background: var(--panel); border: 1px solid var(--panel-edge);
+    border-radius: 12px; padding: 16px 18px; margin: 16px 0 10px;
+  }
+  .bpm .num { font-family: var(--mono); font-size: 48px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--breath); min-width: 2.2ch; }
+  .bpm .num.idle { color: var(--ink-faint); }
+  .bpm .unit { font-size: 14px; color: var(--ink-dim); }
+  .bpm .unit b { color: var(--ink); font-weight: 600; display: block; font-size: 15px; }
+  .bpm .confidence { margin-left: auto; text-align: right; }
+  .bpm .confidence .lab { font-size: 10px; color: var(--ink-dim); margin-bottom: 4px; }
+  .bpm .confidence .dot { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .conf-good { color: var(--live); }
+  .conf-weak { color: var(--warn); }
+  .conf-none { color: var(--ink-faint); }
+
+  /* breathing waveform */
+  .scope-wrap { margin-bottom: 8px; }
+  .scope-label { font-size: 11px; color: var(--ink-dim); margin: 0 2px 5px; display: flex; justify-content: space-between; }
+  canvas { display: block; width: 100%; background: #04060c; border: 1px solid var(--panel-edge); border-radius: 10px; }
+  #wave { height: 150px; }
+  #carrier { height: 96px; }
+
+  .readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 14px; }
+  .cell { background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 8px; padding: 9px 11px; }
+  .cell .k { font-size: 10px; color: var(--ink-dim); margin-bottom: 3px; }
+  .cell .v { font-family: var(--mono); font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+  .cell .v small { font-size: 10px; color: var(--ink-dim); font-weight: 400; }
+  #lockCell.good .v { color: var(--live); }
+  #lockCell.weak .v { color: var(--warn); }
+  #lockCell .v { color: var(--ink-faint); }
+
+  .controls { display: flex; flex-direction: column; gap: 13px; }
+  .btn { appearance: none; border: none; cursor: pointer; font-family: var(--sans); font-size: 16px; font-weight: 600; padding: 15px; border-radius: 10px; width: 100%; background: var(--live); color: #032417; transition: background 0.15s, transform 0.05s; }
+  .btn:active { transform: scale(0.99); }
+  .btn.running { background: var(--stop); color: #2a0007; }
+
+  .slider-row { display: flex; flex-direction: column; gap: 7px; }
+  .slider-row .lab { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-dim); }
+  .slider-row .lab b { font-family: var(--mono); color: var(--ink); font-weight: 600; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: var(--panel-edge); border-radius: 3px; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--trace); cursor: pointer; border: 3px solid var(--bg); }
+  input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--trace); cursor: pointer; border: 3px solid var(--bg); }
+
+  .btn-ghost { background: var(--panel); color: var(--ink-dim); border: 1px solid var(--panel-edge); font-size: 13px; padding: 11px; }
+
+  .status { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); padding: 10px 12px; background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 8px; min-height: 38px; display: flex; align-items: center; }
+  .status.err { color: var(--stop); border-color: #40161c; }
+
+  .guide { margin-top: 22px; }
+  .guide h2 { font-size: 13px; font-weight: 650; margin: 0 0 8px; }
+  .step { display: flex; gap: 12px; padding: 11px 0; border-top: 1px solid var(--panel-edge); font-size: 12.5px; line-height: 1.5; color: var(--ink-dim); }
+  .step .n { flex: none; width: 24px; height: 24px; border-radius: 6px; background: var(--panel); border: 1px solid var(--panel-edge); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; color: var(--trace); font-weight: 600; }
+  .step b { color: var(--ink); font-weight: 600; }
+  .note { margin-top: 14px; font-size: 12px; line-height: 1.55; color: var(--ink-faint); max-width: 62ch; }
+  .pattern { background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 12px; padding: 14px 16px; margin: 0 0 14px; }
+  .pattern .head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .pattern .head .t { font-size: 11px; color: var(--ink-dim); }
+  .pattern .head .clock { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .pattern .verdict { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; color: var(--ink-faint); margin-bottom: 4px; }
+  .pattern .verdict.steady { color: var(--live); }
+  .pattern .verdict.irregular { color: var(--warn); }
+  .pattern .verdict.waxwane { color: var(--trace); }
+  .pattern .explain { font-size: 12px; line-height: 1.5; color: var(--ink-dim); margin: 0 0 10px; max-width: 60ch; }
+  .pattern .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .pattern .stats .k { font-size: 10px; color: var(--ink-dim); margin-bottom: 2px; }
+  .pattern .stats .v { font-family: var(--mono); font-size: 15px; font-weight: 600; }
+  #sizes { height: 90px; }
+  .credit { margin-top: 18px; font-size: 11px; color: var(--ink-faint); line-height: 1.5; }
+  .credit a { color: var(--ink-dim); }
+</style>
+</head>
+<body>
+<header>
+  <div class="title">Echo <span class="sub">breathing scope · v3 pattern detector</span></div>
+  <p class="lede">Takes the Doppler effect you already proved and tries to pull out your actual breathing rhythm — a slow rate hidden inside the echo. Watch the green waveform rise and fall with your chest.</p>
+</header>
+
+<div class="bpm">
+  <div class="num idle" id="bpmNum">--</div>
+  <div class="unit">breaths<b>per min</b></div>
+  <div class="confidence">
+    <div class="lab">lock · breath</div>
+    <div class="dot"><span id="toneConf" class="conf-none">tone</span> · <span id="breathConf" class="conf-none">rhythm</span></div>
+  </div>
+</div>
+
+<div class="scope-wrap">
+  <div class="scope-label"><span>chest motion (Doppler energy over time)</span><span id="waveSpan">60 s window</span></div>
+  <canvas id="wave"></canvas>
+</div>
+
+<div class="scope-wrap">
+  <div class="scope-label"><span>carrier &amp; sidebands (live)</span><span id="carrierHz">—</span></div>
+  <canvas id="carrier"></canvas>
+</div>
+
+<div class="readouts">
+  <div class="cell" id="lockCell"><div class="k">tone lock</div><div class="v" id="lockV">idle</div></div>
+  <div class="cell"><div class="k">buffer filled</div><div class="v" id="fillV">0<small>%</small></div></div>
+  <div class="cell"><div class="k">period</div><div class="v" id="periodV">—<small> s</small></div></div>
+</div>
+
+<div class="pattern">
+  <div class="head"><span class="t">Breathing pattern · last 4 minutes</span><span class="clock" id="patClock">0:00 / 2:00 needed</span></div>
+  <div class="verdict" id="patVerdict">Collecting</div>
+  <p class="explain" id="patExplain">Needs at least 2 minutes of breathing to judge the pattern.</p>
+  <canvas id="sizes"></canvas>
+  <div class="stats">
+    <div><div class="k">breaths</div><div class="v" id="patBreaths">—</div></div>
+    <div><div class="k">pauses ≥ 10 s</div><div class="v" id="patPauses">—</div></div>
+    <div><div class="k">repeat cycle</div><div class="v" id="patCycle">—</div></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn" id="go">Start</button>
+  <div class="slider-row">
+    <div class="lab"><span>Emit frequency (use your phone's good one)</span><b id="freqLab">16600 Hz</b></div>
+    <input type="range" id="freq" min="16000" max="21000" step="100" value="16600">
+  </div>
+  <div class="slider-row">
+    <div class="lab"><span>Emit volume</span><b id="volLab">70%</b></div>
+    <input type="range" id="vol" min="0" max="100" step="1" value="70">
+  </div>
+  <button class="btn btn-ghost" id="reset">Clear waveform &amp; recalibrate baseline</button>
+  <div class="status" id="status">Idle. Prop the phone ~20–40 cm from your chest, then tap Start.</div>
+</div>
+
+<div class="guide">
+  <h2>How to get a reading</h2>
+  <div class="step"><div class="n">1</div><div><b>Set the frequency.</b> Drag the slider to whatever frequency locked best in the hardware test. Tone lock should read <span class="conf-good">tone</span> in green before you expect anything else to work.</div></div>
+  <div class="step"><div class="n">2</div><div><b>Position the phone.</b> Prop it facing your chest, roughly 20–40 cm away (a book stand or leaning against something works). Screen can face you so you can watch.</div></div>
+  <div class="step"><div class="n">3</div><div><b>Hold very still and breathe normally.</b> The scope needs ~30–40 seconds to fill its buffer before it can estimate a rate — watch "buffer filled" climb. Then breathe steadily; the green wave should start to undulate with your breath.</div></div>
+  <div class="step"><div class="n">4</div><div><b>Check it tracks you.</b> The real test: breathe faster for a bit, then slower. The BPM number should follow. If it tracks your actual breathing, the engine works and we build the app around it.</div></div>
+  <div class="step"><div class="n">5</div><div><b>Test the pattern detector.</b> Breathe normally for 2 minutes: it should say <span class="conf-good">Steady</span>. Then tap Clear and repeat this 4 times: breaths get gradually deeper for about 20 s, gradually shallower for about 20 s, then pause for 10 s. After about 3 minutes it should say <b>Waxing-and-waning pattern</b> with a cycle near 50 s. Keep the deep breaths moderate so you don't get lightheaded.</div></div>
+  <p class="note">Honest expectations: this is the hard part. If the green wave is just noise and the number won't settle, try a lower/higher frequency, raise the volume, get closer, and kill any fans/AC. If it still won't lock onto breath after a real attempt, that's useful data — it tells us to adjust the method or lean on the fallback, and we'd rather know now.</p>
+  <p class="credit">Breath-by-breath analysis and the regularity score are adapted from <a href="https://github.com/RyanSeanPhillips/PhysioMetrics">PhysioMetrics</a> by Ryan Sean Phillips (MIT License). Echo is not a medical device.</p>
+</div>
+
+<script>
+(function () {
+  const goBtn = document.getElementById('go');
+  const resetBtn = document.getElementById('reset');
+  const freqEl = document.getElementById('freq');
+  const volEl = document.getElementById('vol');
+  const freqLab = document.getElementById('freqLab');
+  const volLab = document.getElementById('volLab');
+  const statusEl = document.getElementById('status');
+  const bpmNum = document.getElementById('bpmNum');
+  const toneConf = document.getElementById('toneConf');
+  const breathConf = document.getElementById('breathConf');
+  const lockCell = document.getElementById('lockCell');
+  const lockV = document.getElementById('lockV');
+  const fillV = document.getElementById('fillV');
+  const periodV = document.getElementById('periodV');
+  const carrierHz = document.getElementById('carrierHz');
+
+  const waveCvs = document.getElementById('wave');
+  const waveCtx = waveCvs.getContext('2d', { alpha: false });
+  const carCvs = document.getElementById('carrier');
+  const carCtx = carCvs.getContext('2d', { alpha: false });
+  const sizesCvs = document.getElementById('sizes');
+  const sizesCtx = sizesCvs.getContext('2d', { alpha: false });
+  const patClock = document.getElementById('patClock');
+  const patVerdict = document.getElementById('patVerdict');
+  const patExplain = document.getElementById('patExplain');
+  const patBreaths = document.getElementById('patBreaths');
+  const patPauses = document.getElementById('patPauses');
+  const patCycle = document.getElementById('patCycle');
+  let patTick = 0;
+
+  let audioCtx=null, osc=null, gain=null, analyser=null, micStream=null, srcNode=null;
+  let proc=null, sink=null;
+  let freqData=null, running=false, raf=null;
+  let sampleRate=48000, binHz=1;
+  let toneLocked = false;
+
+  // ---------------------------------------------------------------------------
+  // Slow signal: complex baseband (I, Q) of the echo, sampled SLOW_HZ times/sec.
+  // ---------------------------------------------------------------------------
+  const SLOW_HZ = 10;
+  const WINDOW_S = 240;              // keep 4 minutes for the pattern detector
+  const N = SLOW_HZ * WINDOW_S;
+  const DISP_N = SLOW_HZ * 60;       // the live wave shows the last 60 s
+  const PAT_MIN_S = 120;             // pattern needs at least 2 minutes
+  let ringI = new Float32Array(N), ringQ = new Float32Array(N);
+  let ringFilled = 0, ringHead = 0;
+
+  // demodulator state (I/Q mixer + boxcar low-pass)
+  let demodFreq = 18500;
+  let phase = 0;
+  let accI = 0, accQ = 0, accN = 0;
+
+  function sizeCanvas(cvs, cx) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = cvs.getBoundingClientRect();
+    cvs.width = Math.round(rect.width * dpr);
+    cvs.height = Math.round(rect.height * dpr);
+    cx.setTransform(dpr,0,0,dpr,0,0);
+    cx.fillStyle = '#04060c'; cx.fillRect(0,0,rect.width,rect.height);
+    return rect;
+  }
+  let waveRect, carRect, sizesRect;
+  function sizeAll(){ waveRect = sizeCanvas(waveCvs, waveCtx); carRect = sizeCanvas(carCvs, carCtx); sizesRect = sizeCanvas(sizesCvs, sizesCtx); }
+  window.addEventListener('resize', () => { if (running) sizeAll(); });
+
+  function resetBuffer() {
+    ringI = new Float32Array(N); ringQ = new Float32Array(N);
+    ringFilled = 0; ringHead = 0;
+    accI = accQ = accN = 0;
+    bpmNum.textContent = '--'; bpmNum.classList.add('idle');
+    periodV.innerHTML = '—<small> s</small>';
+    breathConf.className = 'conf-none';
+    fillV.innerHTML = '0<small>%</small>';
+    patTick = 0; resetPatternUI();
+    if (running) statusEl.textContent = 'Baseline cleared. Hold still and breathe normally…';
+  }
+
+  // ---------------------------------------------------------------------------
+  // I/Q demodulation of the raw mic signal.
+  // Multiply by cos and sin of the carrier (Euler: e^{-jwt} = cos wt - j sin wt),
+  // then average over 100 ms (a boxcar low-pass) to keep only the slow baseband.
+  // The echo's phase = 4*pi*distance / wavelength, so chest displacement shows up
+  // as a rotation of the (I, Q) point: one rotation back-and-forth per breath.
+  // ---------------------------------------------------------------------------
+  function onAudio(e) {
+    const x = e.inputBuffer.getChannelData(0);
+    const w = 2 * Math.PI * demodFreq / sampleRate;
+    const perSlow = Math.round(sampleRate / SLOW_HZ);
+    for (let n = 0; n < x.length; n++) {
+      accI += x[n] * Math.cos(phase);
+      accQ -= x[n] * Math.sin(phase);
+      phase += w;
+      if (phase > 6.283185307179586) phase -= 6.283185307179586;
+      accN++;
+      if (accN >= perSlow) {
+        pushSlow(accI / accN, accQ / accN);
+        accI = accQ = accN = 0;
+      }
+    }
+  }
+
+  function pushSlow(i, q) {
+    ringI[ringHead] = i; ringQ[ringHead] = q;
+    ringHead = (ringHead + 1) % N;
+    if (ringFilled < N) ringFilled++;
+    fillV.innerHTML = Math.min(100, Math.round(100 * ringFilled / DISP_N)) + '<small>%</small>';
+    drawWave();
+    updateRate();
+    if (++patTick % (SLOW_HZ * 2) === 0) updatePattern(); // every 2 s
+  }
+
+  // Turn the last M (I, Q) points into chest displacement.
+  // The echo traces part of a circle in the I/Q plane: the static echoes (walls,
+  // direct leak) set the circle's center, and the chest echo rotates around it.
+  // Its angle = 4*pi*distance/wavelength, so the unwrapped angle IS displacement.
+  // We fit the circle (least squares); if the arc is too short to fit reliably we
+  // fall back to projecting onto the direction of most motion (PCA).
+  function displacement(M) {
+    const I = new Float64Array(M), Q = new Float64Array(M);
+    let mi = 0, mq = 0;
+    for (let k = 0; k < M; k++) {
+      const idx = (ringHead - M + k + N) % N;
+      I[k] = ringI[idx]; Q[k] = ringQ[idx]; mi += I[k]; mq += Q[k];
+    }
+    mi /= M; mq /= M;
+    let sxx = 0, syy = 0, sxy = 0;
+    for (let k = 0; k < M; k++) {
+      I[k] -= mi; Q[k] -= mq;
+      sxx += I[k]*I[k]; syy += Q[k]*Q[k]; sxy += I[k]*Q[k];
+    }
+    const spread = Math.sqrt((sxx + syy) / M);
+    const d = new Float32Array(M);
+    let usedCircle = false;
+    // Kasa circle fit: x^2 + y^2 + D x + E y + F = 0
+    let a11=0,a12=0,a13=0,a22=0,a23=0,b1=0,b2=0,b3=0;
+    for (let k = 0; k < M; k++) {
+      const x = I[k], y = Q[k], z = -(x*x + y*y);
+      a11+=x*x; a12+=x*y; a13+=x; a22+=y*y; a23+=y; b1+=x*z; b2+=y*z; b3+=z;
+    }
+    const A = [[a11,a12,a13],[a12,a22,a23],[a13,a23,M]], B = [b1,b2,b3];
+    const det3 = m => m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1]) - m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0]) + m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+    const D0 = det3(A);
+    if (spread > 0 && Math.abs(D0) > 1e-30) {
+      const sol = [0,1,2].map(j => det3(A.map((r,i) => r.map((v,c) => c===j ? B[i] : v))) / D0);
+      const cx = -sol[0]/2, cy = -sol[1]/2;
+      const R = Math.sqrt(Math.max(0, cx*cx + cy*cy - sol[2]));
+      if (R > 0 && R < 4*spread) {
+        let prev = Math.atan2(Q[0]-cy, I[0]-cx), acc = 0; d[0] = 0;
+        for (let k = 1; k < M; k++) {
+          const a = Math.atan2(Q[k]-cy, I[k]-cx);
+          let da = a - prev;
+          if (da > Math.PI) da -= 2*Math.PI;
+          if (da < -Math.PI) da += 2*Math.PI;
+          acc += da; d[k] = acc; prev = a;
+        }
+        usedCircle = true;
+      }
+    }
+    if (!usedCircle) {
+      const ang = 0.5 * Math.atan2(2*sxy, sxx - syy);
+      const c = Math.cos(ang), s = Math.sin(ang);
+      for (let k = 0; k < M; k++) d[k] = I[k]*c + Q[k]*s;
+    }
+    // remove slow linear drift
+    let st = 0, sd = 0, stt = 0, std = 0;
+    for (let k = 0; k < M; k++) { st += k; sd += d[k]; stt += k*k; std += k*d[k]; }
+    const den = M*stt - st*st;
+    const slope = den ? (M*std - st*sd) / den : 0;
+    const icpt = (sd - slope*st) / M;
+    for (let k = 0; k < M; k++) d[k] -= icpt + slope*k;
+    return d;
+  }
+
+  function drawWave() {
+    const w = waveRect.width, h = waveRect.height, mid = h/2;
+    waveCtx.fillStyle = '#04060c'; waveCtx.fillRect(0,0,w,h);
+    waveCtx.strokeStyle = 'rgba(123,139,163,0.25)'; waveCtx.lineWidth = 1;
+    waveCtx.beginPath(); waveCtx.moveTo(0,mid); waveCtx.lineTo(w,mid); waveCtx.stroke();
+    if (ringFilled < 10) return;
+    const M = Math.min(ringFilled, DISP_N);
+    const d = displacement(M);
+    // light smoothing for display only (3-point moving average)
+    let mn = Infinity, mx = -Infinity;
+    const sm = new Float32Array(d.length);
+    for (let k = 0; k < d.length; k++) {
+      const a = d[Math.max(0,k-1)], b = d[k], cc = d[Math.min(d.length-1,k+1)];
+      sm[k] = (a+b+cc)/3;
+      if (sm[k] < mn) mn = sm[k]; if (sm[k] > mx) mx = sm[k];
+    }
+    const rng = Math.max(1e-9, mx - mn);
+    const offset = DISP_N - M;
+    waveCtx.beginPath();
+    for (let k = 0; k < sm.length; k++) {
+      const x = ((k + offset) / (DISP_N - 1)) * w;
+      const y = h - ((sm[k] - mn) / rng) * (h - 16) - 8;
+      if (k === 0) waveCtx.moveTo(x, y); else waveCtx.lineTo(x, y);
+    }
+    waveCtx.strokeStyle = '#35e0a1'; waveCtx.lineWidth = 2; waveCtx.stroke();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Breathing pattern detector
+  // ---------------------------------------------------------------------------
+// Breathing pattern analysis for Echo.
+  // Breath-by-breath approach and RMSSD regularity score adapted from
+  // PhysioMetrics (MIT License, Ryan Sean Phillips): https://github.com/RyanSeanPhillips/PhysioMetrics
+  //
+  // Input: chest displacement samples d[] at fs Hz (already detrended).
+  // Output: breaths, pauses, regularity, and whether a waxing-and-waning
+  // (crescendo-decrescendo) pattern repeats.
+  
+  function movingAverage(x, w) {
+    const n = x.length, out = new Float64Array(n);
+    let s = 0;
+    const h = Math.floor(w / 2);
+    const pre = new Float64Array(n + 1);
+    for (let i = 0; i < n; i++) pre[i + 1] = pre[i] + x[i];
+    for (let i = 0; i < n; i++) {
+      const a = Math.max(0, i - h), b = Math.min(n, i + h + 1);
+      out[i] = (pre[b] - pre[a]) / (b - a);
+    }
+    return out;
+  }
+  
+  function median(arr) {
+    if (!arr.length) return 0;
+    const s = Array.from(arr).sort((a, b) => a - b);
+    const m = s.length >> 1;
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  }
+  
+  function quantile(arr, q) {
+    if (!arr.length) return 0;
+    const s = Array.from(arr).sort((a, b) => a - b);
+    const pos = (s.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
+    return s[lo] + (s[hi] - s[lo]) * (pos - lo);
+  }
+  
+  // Find individual breaths: smooth, remove slow baseline, then detect each
+  // rise from a trough to a peak using hysteresis so noise during pauses
+  // doesn't count as breaths.
+  function detectBreaths(d, fs) {
+    const smooth = movingAverage(d, Math.max(1, Math.round(0.4 * fs)));
+    const base = movingAverage(smooth, Math.round(8 * fs));
+    const x = new Float64Array(d.length);
+    for (let i = 0; i < d.length; i++) x[i] = smooth[i] - base[i];
+  
+    // scale = typical breath size, from the larger swings in the window
+    const absx = Array.from(x, Math.abs);
+    const scale = quantile(absx, 0.9);
+    const hyst = 0.12 * scale;
+  
+    // walk the signal: alternate between looking for a trough and a peak
+    const breaths = [];
+    let mode = 'trough', tIdx = 0, tVal = x[0], pIdx = 0, pVal = x[0];
+    for (let i = 1; i < x.length; i++) {
+      const v = x[i];
+      if (mode === 'trough') {
+        if (v < tVal) { tVal = v; tIdx = i; }
+        else if (v > tVal + hyst) { mode = 'peak'; pVal = v; pIdx = i; }
+      } else {
+        if (v > pVal) { pVal = v; pIdx = i; }
+        else if (v < pVal - hyst) {
+          breaths.push({ onset: tIdx, peak: pIdx, amp: pVal - tVal });
+          mode = 'trough'; tVal = v; tIdx = i;
+        }
+      }
+    }
+    // drop tiny wiggles (noise), relative to the typical breath
+    const medAmp = median(breaths.map(b => b.amp));
+    return { breaths: breaths.filter(b => b.amp > 0.15 * medAmp), signal: x };
+  }
+  
+  // Main analysis.
+  function analyzePattern(d, fs, opts = {}) {
+    const pauseSec = opts.pauseSec || 10;
+    const n = d.length, durSec = n / fs;
+    const { breaths } = detectBreaths(d, fs);
+    const res = { durSec, breathCount: breaths.length, pauses: [], rmssd: null,
+                  regular: null, waxWane: false, cycleSec: null, cycleStrength: 0,
+                  depth: 0, ampSeries: [], label: 'Not enough data' };
+    if (breaths.length < 4 || durSec < 60) return res;
+  
+    // pauses: gaps between breath onsets longer than pauseSec
+    // (also counts a pause at the start or end of the window)
+    const onsetsSec = breaths.map(b => b.onset / fs);
+    const gaps = [];
+    for (let i = 1; i < onsetsSec.length; i++) gaps.push([onsetsSec[i - 1], onsetsSec[i]]);
+    for (const [a, b] of gaps) if (b - a > pauseSec) res.pauses.push({ start: a, end: b, len: b - a });
+  
+    // regularity: RMSSD of breath-to-breath intervals (seconds), ignoring pauses
+    const ibis = gaps.map(([a, b]) => b - a).filter(v => v <= pauseSec);
+    if (ibis.length >= 3) {
+      let s = 0;
+      for (let i = 1; i < ibis.length; i++) s += (ibis[i] - ibis[i - 1]) ** 2;
+      res.rmssd = Math.sqrt(s / (ibis.length - 1));
+      const meanIbi = ibis.reduce((a, b) => a + b, 0) / ibis.length;
+      // overall spread of timing and size, using the 10th-90th percentile range
+      // so one sigh or one odd breath doesn't count as irregular breathing
+      const amps = breaths.map(b => b.amp);
+      res.ibiSpread = (quantile(ibis, 0.9) - quantile(ibis, 0.1)) / median(ibis);
+      res.ampSpread = (quantile(amps, 0.9) - quantile(amps, 0.1)) / median(amps);
+      // regular = small breath-to-breath jumps AND small overall spread
+      res.regular = res.rmssd / meanIbi < 0.25 && res.ibiSpread < 0.5 && res.ampSpread < 0.7;
+    }
+  
+    // breath-size envelope at 1 Hz: each second takes the size of the breath
+    // that covers it, and 0 during pauses
+    const env = new Float64Array(Math.floor(durSec));
+    for (let k = 0; k < breaths.length; k++) {
+      const a = Math.floor(onsetsSec[k]);
+      const b = k + 1 < breaths.length ? Math.floor(onsetsSec[k + 1]) : env.length;
+      const len = b - a;
+      const val = len > pauseSec ? 0 : breaths[k].amp;
+      for (let s = a; s < Math.min(b, env.length); s++) env[s] = val;
+      if (len > pauseSec) for (let s = a; s < Math.min(a + 4, env.length); s++) env[s] = breaths[k].amp;
+    }
+    res.ampSeries = breaths.map((b, k) => ({ t: onsetsSec[k], amp: b.amp }));
+  
+    // smooth the envelope a little, then look for a repeating cycle 25–120 s long
+    const e = movingAverage(env, 5);
+    const mean = e.reduce((a, b) => a + b, 0) / e.length;
+    const c = Array.from(e, v => v - mean);
+    let var0 = 0; for (const v of c) var0 += v * v;
+    const p90 = quantile(e, 0.9), p10 = quantile(e, 0.1);
+    res.depth = p90 > 0 ? (p90 - p10) / p90 : 0;
+    // autocorrelation for every lag, then take the FIRST strong peak, since a
+    // repeating pattern also correlates at 2x and 3x its true cycle length
+    const maxLag = Math.min(120, Math.floor(e.length / 2));
+    const R = {};
+    for (let lag = 20; lag <= maxLag + 1; lag++) {
+      let s = 0;
+      for (let i = 0; i + lag < c.length; i++) s += c[i] * c[i + lag];
+      R[lag] = var0 > 0 ? Math.min(1, (s / var0) * (c.length / (c.length - lag))) : 0;
+    }
+    let best = 0;
+    for (let lag = 25; lag <= maxLag; lag++) best = Math.max(best, R[lag]);
+    let bestLag = null;
+    for (let lag = 25; lag <= maxLag; lag++) {
+      const isPeak = R[lag] >= R[lag - 1] && R[lag] >= (R[lag + 1] ?? -1);
+      if (isPeak && R[lag] >= 0.8 * best) { bestLag = lag; best = R[lag]; break; }
+    }
+    res.cycleStrength = best;
+    res.cycleSec = bestLag;
+    const enoughCycles = bestLag && durSec >= 2 * bestLag;
+    res.waxWane = !!(enoughCycles && best > 0.35 && res.depth > 0.6);
+  
+    if (res.waxWane) res.label = 'Waxing-and-waning pattern';
+    else if (res.regular === false || res.pauses.length > 0) res.label = 'Irregular';
+    else res.label = 'Steady';
+    return res;
+  }
+  
+  
+  function fmtClock(sec) { const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return m + ':' + String(s).padStart(2, '0'); }
+
+  function resetPatternUI() {
+    patVerdict.textContent = 'Collecting'; patVerdict.className = 'verdict';
+    patExplain.textContent = 'Needs at least 2 minutes of breathing to judge the pattern.';
+    patBreaths.textContent = '—'; patPauses.textContent = '—'; patCycle.textContent = '—';
+    patClock.textContent = '0:00 / 2:00 needed';
+    if (sizesRect) { sizesCtx.fillStyle = '#04060c'; sizesCtx.fillRect(0, 0, sizesRect.width, sizesRect.height); }
+  }
+
+  function updatePattern() {
+    const sec = ringFilled / SLOW_HZ;
+    patClock.textContent = sec < PAT_MIN_S ? fmtClock(sec) + ' / 2:00 needed' : fmtClock(sec) + ' analyzed';
+    if (sec < PAT_MIN_S || !toneLocked) {
+      if (!toneLocked) patExplain.textContent = 'Waiting for a tone lock.';
+      return;
+    }
+    const d = displacement(ringFilled);
+    const r = analyzePattern(Array.from(d), SLOW_HZ);
+    patBreaths.textContent = r.breathCount;
+    patPauses.textContent = r.pauses.length;
+    patCycle.textContent = r.waxWane ? r.cycleSec + ' s' : '—';
+    if (r.label === 'Waxing-and-waning pattern') {
+      patVerdict.className = 'verdict waxwane';
+      patExplain.textContent = 'Breaths grow deeper, then shallower' + (r.pauses.length ? ', then pause,' : '') + ' in a repeating cycle of about ' + r.cycleSec + ' s. This pattern can appear after a stroke or with heart conditions. Only a doctor can say what it means.';
+    } else if (r.label === 'Irregular') {
+      patVerdict.className = 'verdict irregular';
+      patExplain.textContent = r.pauses.length ? 'Breathing paused for 10 s or more ' + r.pauses.length + (r.pauses.length === 1 ? ' time' : ' times') + ', but with no repeating cycle.' : 'Breath timing jumps around more than usual, with no repeating cycle.';
+    } else if (r.label === 'Steady') {
+      patVerdict.className = 'verdict steady';
+      patExplain.textContent = 'Breath size and timing are consistent, with no pauses.';
+    } else {
+      patVerdict.className = 'verdict';
+      patExplain.textContent = 'Not enough clear breaths yet. Hold still and keep the phone aimed at your chest.';
+    }
+    patVerdict.textContent = r.label;
+    drawSizes(r, sec);
+  }
+
+  // one bar per breath, height = breath size; gaps show pauses
+  function drawSizes(r, sec) {
+    const w = sizesRect.width, h = sizesRect.height;
+    sizesCtx.fillStyle = '#04060c'; sizesCtx.fillRect(0, 0, w, h);
+    if (!r.ampSeries.length) return;
+    let mx = 0; for (const b of r.ampSeries) mx = Math.max(mx, b.amp);
+    const color = r.waxWane ? '#6fa8ff' : (r.label === 'Irregular' ? '#f2b03d' : '#35e0a1');
+    for (const p of r.pauses) {
+      sizesCtx.fillStyle = 'rgba(255,93,108,0.12)';
+      sizesCtx.fillRect((p.start / sec) * w, 0, ((p.end - p.start) / sec) * w, h);
+    }
+    sizesCtx.fillStyle = color;
+    const bw = Math.max(2, Math.min(6, w / r.ampSeries.length * 0.6));
+    for (const b of r.ampSeries) {
+      const x = (b.t / sec) * w, bh = Math.max(2, (b.amp / mx) * (h - 8));
+      sizesCtx.fillRect(x, h - bh, bw, bh);
+    }
+  }
+
+  // Breathing rate = strongest frequency of the displacement signal in
+  // 0.08–0.6 Hz (5–36 breaths/min), using the most recent ~28 s.
+  function estimateRate() {
+    if (ringFilled < SLOW_HZ * 20) return null;
+    const M = Math.min(ringFilled, SLOW_HZ * 28);
+    const x = displacement(M);
+    for (let k = 0; k < M; k++) x[k] *= 0.5 - 0.5*Math.cos(2*Math.PI*k/(M-1)); // Hann
+    const fLo = 0.08, fHi = 0.6, steps = 130;
+    const P = new Float32Array(steps + 1);
+    let bestS = 0, bestP = 0, total = 0;
+    for (let s = 0; s <= steps; s++) {
+      const f = fLo + (fHi - fLo) * s / steps;
+      let re = 0, im = 0;
+      for (let k = 0; k < M; k++) {
+        const ph = 2*Math.PI*f*k/SLOW_HZ;
+        re += x[k]*Math.cos(ph); im -= x[k]*Math.sin(ph);
+      }
+      P[s] = re*re + im*im; total += P[s];
+      if (P[s] > bestP) { bestP = P[s]; bestS = s; }
+    }
+    let f = fLo + (fHi - fLo) * bestS / steps;
+    // Safety net against the "double counting" error: if there is strong energy
+    // at half the detected rate, the true breath is probably the slower one.
+    const fHalf = f / 2;
+    if (fHalf >= fLo) {
+      const sHalf = Math.round((fHalf - fLo) / (fHi - fLo) * steps);
+      let pHalf = 0;
+      for (let s = Math.max(0, sHalf-2); s <= Math.min(steps, sHalf+2); s++) pHalf = Math.max(pHalf, P[s]);
+      if (pHalf > 0.5 * bestP) { f = fHalf; bestP = pHalf; }
+    }
+    const prominence = total > 0 ? bestP / (total / (steps + 1)) : 0;
+    return { freq: f, bpm: f * 60, prominence };
+  }
+
+  function updateRate() {
+    if (!toneLocked) { breathConf.className = 'conf-none'; return; }
+    const est = estimateRate();
+    if (!est) return;
+    bpmNum.textContent = Math.round(est.bpm);
+    bpmNum.classList.remove('idle');
+    periodV.innerHTML = (1/est.freq).toFixed(1) + '<small> s</small>';
+    if (est.prominence > 12) breathConf.className = 'conf-good';
+    else if (est.prominence > 5) breathConf.className = 'conf-weak';
+    else breathConf.className = 'conf-none';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Carrier display + tone lock (uses the FFT analyser, unchanged)
+  // ---------------------------------------------------------------------------
+  function drawCarrier(emitF) {
+    const span = 300;
+    const lo = emitF - span, hi = emitF + span;
+    const w = carRect.width, h = carRect.height;
+    carCtx.fillStyle = '#04060c'; carCtx.fillRect(0,0,w,h);
+    carCtx.fillStyle = 'rgba(53,224,161,0.06)'; carCtx.fillRect(0,0,w,h);
+    carCtx.beginPath();
+    for (let x = 0; x < w; x++) {
+      const f = lo + (x/w)*(hi-lo);
+      const bin = Math.round(f / binHz);
+      const v = (bin>=0&&bin<freqData.length)? freqData[bin]/255 : 0;
+      const y = h - v*h*0.95 - 2;
+      if (x===0) carCtx.moveTo(x,y); else carCtx.lineTo(x,y);
+    }
+    carCtx.strokeStyle = '#6fa8ff'; carCtx.lineWidth = 1.5; carCtx.stroke();
+    const mx = ((emitF - lo)/(hi-lo))*w;
+    carCtx.strokeStyle = 'rgba(242,176,61,0.7)'; carCtx.lineWidth = 1;
+    carCtx.beginPath(); carCtx.moveTo(mx,0); carCtx.lineTo(mx,h); carCtx.stroke();
+  }
+
+  function frame() {
+    if (!running) return;
+    analyser.getByteFrequencyData(freqData);
+    const emitF = +freqEl.value;
+    drawCarrier(emitF);
+    let carrierPeak = 0;
+    const a = Math.max(0, Math.floor((emitF-60)/binHz));
+    const b = Math.min(freqData.length-1, Math.ceil((emitF+60)/binHz));
+    for (let i=a;i<=b;i++) if (freqData[i]>carrierPeak) carrierPeak=freqData[i];
+    if (carrierPeak > 90) { lockV.textContent='locked'; lockCell.classList.remove('weak'); lockCell.classList.add('good'); toneConf.className='conf-good'; toneLocked=true; }
+    else if (carrierPeak > 35) { lockV.textContent='weak'; lockCell.classList.remove('good'); lockCell.classList.add('weak'); toneConf.className='conf-weak'; toneLocked=true; }
+    else { lockV.textContent='no tone'; lockCell.classList.remove('good','weak'); toneConf.className='conf-none'; toneLocked=false; }
+    carrierHz.textContent = emitF + ' Hz · peak ' + carrierPeak;
+    raf = requestAnimationFrame(frame);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Simulation mode for testing and demos: add ?sim=steady, ?sim=wax or
+  // ?sim=irregular to the link (and &speed=10 to run 10x faster). No mic is used.
+  // ---------------------------------------------------------------------------
+  const params = new URLSearchParams(location.search);
+  const SIM = params.get('sim');
+  const SIM_SPEED = Math.max(1, Math.min(50, +params.get('speed') || 1));
+  let simTimer = null, simT = 0, simPh = 0;
+  function simDepthMM(t) {
+    if (SIM === 'wax') { const p = t % 50; return p < 40 ? 7 * Math.sin(Math.PI * p / 40) : 0; }
+    if (SIM === 'irregular') { const k = Math.floor(t / 4); return 2 + 5 * Math.abs(Math.sin(k * 12.9898) * 43758.5453 % 1); }
+    return 4;
+  }
+  function simRate(t) {
+    if (SIM === 'irregular') { const k = Math.floor(t / 5); return 10 + 15 * Math.abs(Math.sin(k * 78.233) * 12345.678 % 1); }
+    return SIM === 'wax' ? 16 : 15;
+  }
+  function startSim() {
+    sizeAll(); resetBuffer();
+    running = true; toneLocked = true;
+    goBtn.textContent = 'Stop'; goBtn.classList.add('running');
+    lockV.textContent = 'sim'; lockCell.classList.add('good'); toneConf.className = 'conf-good';
+    statusEl.textContent = 'SIMULATION (' + SIM + ', ' + SIM_SPEED + 'x speed). Fake breathing, no microphone.';
+    const lam = 343 / 16600;
+    simTimer = setInterval(() => {
+      for (let k = 0; k < SIM_SPEED; k++) {
+        simT += 1 / SLOW_HZ;
+        simPh += 2 * Math.PI * simRate(simT) / 60 / SLOW_HZ;
+        const dmm = simDepthMM(simT) * 0.5 * (1 - Math.cos(simPh));
+        const ang = 4 * Math.PI * (0.25 + dmm / 1000) / lam;
+        pushSlow(1 + 0.05 * Math.cos(ang) + 0.002 * (Math.random() * 2 - 1),
+                 0.4 + 0.05 * Math.sin(ang) + 0.002 * (Math.random() * 2 - 1));
+      }
+    }, 100);
+  }
+
+  async function start() {
+    if (SIM) return startSim();
+    try {
+      statusEl.classList.remove('err');
+      statusEl.textContent = 'Requesting microphone…';
+      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      sampleRate = audioCtx.sampleRate;
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1 }
+      });
+      srcNode = audioCtx.createMediaStreamSource(micStream);
+
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 16384;
+      analyser.smoothingTimeConstant = 0.0;
+      freqData = new Uint8Array(analyser.frequencyBinCount);
+      binHz = sampleRate / analyser.fftSize;
+      srcNode.connect(analyser);
+
+      // raw-sample tap for I/Q demodulation (routed into a silent sink so it runs)
+      proc = audioCtx.createScriptProcessor(2048, 1, 1);
+      sink = audioCtx.createGain(); sink.gain.value = 0;
+      srcNode.connect(proc); proc.connect(sink); sink.connect(audioCtx.destination);
+      demodFreq = +freqEl.value; phase = 0;
+      proc.onaudioprocess = onAudio;
+
+      osc = audioCtx.createOscillator(); gain = audioCtx.createGain();
+      osc.type='sine'; osc.frequency.value = +freqEl.value;
+      gain.gain.value = (+volEl.value)/100*0.5;
+      osc.connect(gain); gain.connect(audioCtx.destination); osc.start();
+
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+      sizeAll(); resetBuffer();
+      running = true;
+      goBtn.textContent='Stop'; goBtn.classList.add('running');
+      statusEl.textContent = 'Running · '+sampleRate+' Hz. Hold still ~30 s while the buffer fills.';
+      raf = requestAnimationFrame(frame);
+    } catch(e) {
+      statusEl.classList.add('err');
+      statusEl.textContent = 'Could not start: '+(e&&e.message?e.message:e)+'. Mic must be allowed and the page served over https or localhost.';
+      stop(true);
+    }
+  }
+
+  function stop(silent){
+    if (simTimer) { clearInterval(simTimer); simTimer = null; }
+    running=false; if(raf) cancelAnimationFrame(raf);
+    try{ if(osc) osc.stop(); }catch(e){}
+    if(proc) proc.onaudioprocess = null;
+    if(micStream) micStream.getTracks().forEach(t=>t.stop());
+    if(audioCtx) audioCtx.close();
+    osc=gain=analyser=micStream=srcNode=audioCtx=proc=sink=null;
+    toneLocked=false;
+    goBtn.textContent='Start'; goBtn.classList.remove('running');
+    lockCell.classList.remove('good','weak'); lockV.textContent='idle';
+    toneConf.className='conf-none'; breathConf.className='conf-none';
+    if(!silent) statusEl.textContent='Stopped.';
+  }
+
+  goBtn.addEventListener('click', ()=> running?stop():start());
+  resetBtn.addEventListener('click', resetBuffer);
+  freqEl.addEventListener('input', ()=>{
+    freqLab.textContent=freqEl.value+' Hz';
+    if(osc) osc.frequency.value=+freqEl.value;
+    demodFreq = +freqEl.value;
+    if (running) resetBuffer(); // phase reference changed, start fresh
+  });
+  volEl.addEventListener('input', ()=>{ volLab.textContent=volEl.value+'%'; if(gain) gain.gain.value=(+volEl.value)/100*0.5; });
+
+  freqLab.textContent=freqEl.value+' Hz'; volLab.textContent=volEl.value+'%';
+})();
+</script>
+</body>
+</html>
