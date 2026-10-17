@@ -118,6 +118,40 @@
   .fine { font-size: 12px; color: var(--faint); line-height: 1.55; margin: 18px 4px 0; }
   .fine a { color: var(--dim); }
 
+  /* ---------- Reports & Trends ---------- */
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 4px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; appearance: none; border: 1px solid var(--edge); background: var(--panel); color: var(--dim); border-radius: 999px; padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .tiles .k { font-size: 11px; color: var(--dim); margin-bottom: 3px; }
+  .tiles .v { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; }
+  .tiles .v small { font-size: 13px; color: var(--dim); font-weight: 500; }
+  .charttitle { font-size: 13px; font-weight: 600; color: var(--ink); margin: 2px 0 8px; }
+  .chartwrap { position: relative; touch-action: pan-y; }
+  .tip { display: none; position: absolute; top: 2px; background: #1b2333; border: 1px solid var(--edge); color: var(--ink); font-size: 12px; line-height: 1.45; padding: 7px 9px; border-radius: 8px; pointer-events: none; white-space: nowrap; z-index: 5; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--dim); margin: 8px 0 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .lk { display: inline-block; }
+  .lk.line { width: 16px; height: 2px; background: #20a493; border-radius: 1px; }
+  .lk.pause, .tk.pause { width: 3px; height: 10px; background: #c9343f; border-radius: 1px; }
+  .tk { display: inline-block; margin-right: 5px; vertical-align: -1px; }
+  .lk.band { width: 16px; height: 10px; background: rgba(32,164,147,0.25); border-radius: 2px; }
+  .lk.flagline { width: 16px; height: 1px; background: #b98a2c; }
+  .trendstatus { display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 650; margin-bottom: 6px; }
+  .trendstatus.ok { color: var(--breath); }
+  .trendstatus.flag, .flagtxt { color: var(--amber); }
+  .flagtxt { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+  .ico { width: 18px; height: 18px; flex: none; }
+  .flagtxt .ico { width: 14px; height: 14px; }
+  details { margin-top: 10px; font-size: 13px; color: var(--dim); }
+  details summary { cursor: pointer; padding: 6px 0; color: var(--ink); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 6px 4px; border-top: 1px solid var(--edge); }
+  th { color: var(--faint); font-weight: 600; font-size: 12px; }
+  .sharebox { width: 100%; height: 160px; margin-top: 8px; background: var(--bg); color: var(--ink); border: 1px solid var(--edge); border-radius: 10px; padding: 10px; font: 13px/1.5 var(--sans); }
+  .kv span:last-child { text-align: right; }
+
   /* ---------- Tab bar ---------- */
   nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: rgba(10,13,20,0.94); border-top: 1px solid var(--edge); padding-bottom: env(safe-area-inset-bottom); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   nav .in { max-width: 560px; margin: 0 auto; display: flex; height: var(--tabbar); }
@@ -184,26 +218,15 @@
   <!-- ==================== TRENDS ==================== -->
   <section class="view" id="view-trends">
     <h1>Trends</h1>
-    <p class="sub">What's normal for this person, and when that changes.</p>
-    <div class="card">
-      <span class="soon">Coming next</span>
-      <p><b style="color:var(--ink)">Early Warning.</b> After about a week, Echo learns this person's usual nighttime breathing rate and flags nights when it rises well above normal.</p>
-      <p><b style="color:var(--ink)">Breathing pattern.</b> Shows nights with a repeating waxing-and-waning pattern (breaths growing deeper, then shallower, then pausing).</p>
-    </div>
+    <p class="sub">Echo learns what's normal for this person and flags nights that are well above it.</p>
+    <div id="trendsBody"></div>
   </section>
 
   <!-- ==================== REPORTS ==================== -->
   <section class="view" id="view-reports">
     <h1>Reports</h1>
-    <p class="sub">A morning summary to share with family or a doctor.</p>
-    <div class="card" id="lastSession">
-      <h2>Last session</h2>
-      <p>No sessions yet. Start one from the Tonight tab.</p>
-    </div>
-    <div class="card">
-      <span class="soon">Coming next</span>
-      <p>A graph of the whole night, pause times, comparison with past nights, and a Share button for family or a PDF for a doctor visit.</p>
-    </div>
+    <p class="sub">A summary of each night to share with family or a doctor.</p>
+    <div id="reportsBody"></div>
   </section>
 
   <!-- ==================== SETTINGS ==================== -->
@@ -288,7 +311,8 @@
   document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
     document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + b.dataset.tab));
-    if (b.dataset.tab === 'reports') renderLastSession();
+    if (b.dataset.tab === 'reports') renderReports();
+    if (b.dataset.tab === 'trends') renderTrends();
     if (b.dataset.tab === 'tonight' && running) sizeWave();
     noteActivity();
   }));
@@ -309,6 +333,7 @@
 
   // monitoring state
   let armed = false, alarmOn = false, lastBreathAgo = 0, sessionLog = null, lastNorm = 0.5;
+  let everArmed = false, curPause = null, sessTicks = 0, winRates = [];
   let lastActivity = Date.now();
 
   function resetBuffer() {
@@ -589,7 +614,12 @@
     ringI[ringHead] = i; ringQ[ringHead] = q;
     ringHead = (ringHead + 1) % N;
     if (ringFilled < N) ringFilled++;
-    tick++;
+    tick++; sessTicks++;
+    // every 30 s of session time, store the median breathing rate for the report
+    if (sessionLog && sessTicks % (SLOW_HZ * 30) === 0) {
+      sessionLog.timeline.push([sessTicks / SLOW_HZ, winRates.length ? Math.round(median(winRates)) : null]);
+      winRates = [];
+    }
     drawWave();
     if (tick % 5 === 0) updateRate();          // twice a second
     if (tick % SLOW_HZ === 0) checkBreathing(); // once a second
@@ -650,7 +680,7 @@
     if (lastBreathAgo > 10) { $('bpm').textContent = '--'; $('bpm').classList.add('idle'); return; }
     $('bpm').textContent = Math.round(est.bpm);
     $('bpm').classList.remove('idle');
-    if (sessionLog && est.prominence > 5) sessionLog.rates.push(Math.round(est.bpm));
+    if (sessionLog && est.prominence > 5 && lastBreathAgo < 6) winRates.push(est.bpm);
   }
 
   // ---------------------------------------------------------------------------
@@ -666,9 +696,10 @@
     const { breaths } = detectBreaths(Array.from(d), SLOW_HZ);
     const recent = breaths.filter(b => (M - 1 - b.peak) / SLOW_HZ <= 60);
     lastBreathAgo = breaths.length ? (M - 1 - breaths[breaths.length - 1].peak) / SLOW_HZ : M / SLOW_HZ;
+    trackPause();
 
     if (!armed) {
-      if (recent.length >= 6 && lastBreathAgo < 8) { armed = true; }
+      if (recent.length >= 6 && lastBreathAgo < 8) { armed = true; everArmed = true; }
       else { setStatus('wait', 'Waiting for steady breathing'); hideCountdown(); return; }
     }
     if (alarmOn) return;
@@ -685,6 +716,23 @@
       hideCountdown();
       $('nightText').textContent = 'Watching · tap to open';
     }
+  }
+  // record every pause of 10 s or more for the morning report
+  function trackPause() {
+    if (!sessionLog || !everArmed) return;
+    const now = sessTicks / SLOW_HZ;
+    if (lastBreathAgo >= 10) {
+      if (!curPause) curPause = { s: now - lastBreathAgo, len: lastBreathAgo, alarm: false };
+      curPause.len = Math.max(curPause.len, lastBreathAgo);
+    } else if (curPause) {
+      closePause();
+    }
+  }
+  function closePause() {
+    if (!curPause) return;
+    sessionLog.pauses.push([Math.round(curPause.s), Math.round(curPause.len), curPause.alarm ? 1 : 0]);
+    $('pausesV').textContent = sessionLog.pauses.length;
+    curPause = null;
   }
   function hideCountdown() { $('countdown').classList.remove('show'); }
 
@@ -716,8 +764,8 @@
     else call.style.display = 'none';
     $('alarm').classList.add('show');
     setStatus('bad', 'Alarm');
-    if (sessionLog) sessionLog.pauses.push({ at: Date.now(), sec });
-    $('pausesV').textContent = sessionLog ? sessionLog.pauses.length : 0;
+    if (sessionLog) sessionLog.alarms++;
+    if (curPause) curPause.alarm = true;
     if (navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 400]);
     if (settings.sound) startBeeps();
   }
@@ -868,7 +916,8 @@
   function beginWatching() {
     resetBuffer();
     running = true; alarmOn = false;
-    sessionLog = { start: Date.now(), rates: [], pauses: [], waxWane: false };
+    sessionLog = { start: Date.now(), timeline: [], pauses: [], alarms: 0, waxWane: false };
+    everArmed = false; curPause = null; sessTicks = 0; winRates = [];
     $('pausesV').textContent = '0'; $('patternV').textContent = '—';
     $('bpm').textContent = '--'; $('bpm').classList.add('idle');
     show('tWatch'); sizeWave(); setStatus('wait', 'Getting ready');
@@ -899,30 +948,415 @@
   // Session log (for the Reports tab)
   // ---------------------------------------------------------------------------
   function saveSession() {
-    const s = sessionLog, end = Date.now();
-    const rates = s.rates.slice().sort((a, b) => a - b);
-    const entry = {
-      start: s.start, end, minutes: Math.round((end - s.start) / 60000),
-      avgRate: rates.length ? Math.round(rates.reduce((a, b) => a + b, 0) / rates.length) : null,
-      lowRate: rates.length ? rates[Math.floor(rates.length * 0.1)] : null,
-      highRate: rates.length ? rates[Math.floor(rates.length * 0.9)] : null,
-      alarms: s.pauses.length, waxWane: s.waxWane, sim: !!SIM
-    };
-    const all = store.get('sessions', []); all.push(entry); store.set('sessions', all.slice(-60));
+    closePause();
+    const s = sessionLog;
+    if (winRates.length) s.timeline.push([sessTicks / SLOW_HZ, Math.round(median(winRates))]);
+    const entry = finishSession({ id: s.start, start: s.start, durSec: Math.round(sessTicks / SLOW_HZ),
+      timeline: s.timeline, pauses: s.pauses, alarms: s.alarms, waxWane: s.waxWane, sim: !!SIM });
+    saveSessions(loadSessions().concat([entry]));
+    selectedSessionId = entry.id;
   }
-  function renderLastSession() {
-    const all = store.get('sessions', []);
-    const el = $('lastSession');
-    if (!all.length) return;
-    const s = all[all.length - 1];
-    const fmt = t => new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
-    el.innerHTML = '<h2>Last session' + (s.sim ? ' (simulation)' : '') + '</h2>' +
-      '<div class="kv"><span>Started</span><span>' + fmt(s.start) + '</span></div>' +
-      '<div class="kv"><span>Length</span><span>' + s.minutes + ' min</span></div>' +
-      '<div class="kv"><span>Average breathing</span><span>' + (s.avgRate ?? '—') + (s.avgRate ? ' / min' : '') + '</span></div>' +
-      '<div class="kv"><span>Typical range</span><span>' + (s.lowRate ? s.lowRate + '–' + s.highRate + ' / min' : '—') + '</span></div>' +
-      '<div class="kv"><span>Pause alarms</span><span>' + s.alarms + '</span></div>' +
-      '<div class="kv"><span>Waxing–waning pattern</span><span>' + (s.waxWane ? 'Seen' : 'Not seen') + '</span></div>';
+
+  // ===========================================================================
+  // Saved nights, Morning Report, Trends / Early Warning
+  // ===========================================================================
+  const C = { line: '#20a493', flag: '#b98a2c', pause: '#c9343f', grid: '#1f2738', text: '#8a93a6', ink: '#e9edf5', surface: '#121826' };
+  const MIN_NIGHT_MIN = 30;     // shorter sessions are kept but not used for Trends
+  const FLAG_ABOVE = 3;         // breaths/min above normal that counts as "above normal"
+  let selectedSessionId = null;
+
+  function loadSessions() { return store.get('sessions', []).sort((a, b) => a.start - b.start); }
+  function saveSessions(all) { store.set('sessions', all.slice().sort((a, b) => a.start - b.start).slice(-45)); }
+
+  const fmtTime = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const fmtDay = t => new Date(t).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  const fmtDur = min => min >= 60 ? Math.floor(min / 60) + ' h ' + (min % 60) + ' min' : min + ' min';
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // ---- baseline: median nightly average of up to 14 earlier qualifying nights
+  function nightsForTrends(all) { return all.filter(s => s.minutes >= MIN_NIGHT_MIN && s.avgRate); }
+  function baselineBefore(nights, idx) {
+    const prev = nights.slice(Math.max(0, idx - 14), idx).map(n => n.avgRate);
+    if (prev.length < 3) return null;
+    return median(prev);
+  }
+  function compareToNormal(session) {
+    const nights = nightsForTrends(loadSessions());
+    const idx = nights.findIndex(n => n.id === session.id);
+    if (idx < 0) return null;
+    const base = baselineBefore(nights, idx);
+    if (base === null) return null;
+    const diff = session.avgRate - base;
+    const prevFlag = idx > 0 && baselineBefore(nights, idx - 1) !== null && nights[idx - 1].avgRate - baselineBefore(nights, idx - 1) >= FLAG_ABOVE;
+    return { base: Math.round(base * 10) / 10, diff: Math.round(diff * 10) / 10, flagged: diff >= FLAG_ABOVE, twoInRow: diff >= FLAG_ABOVE && prevFlag };
+  }
+
+  // ---- canvas helpers
+  function prepCanvas(cvs) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const r = cvs.getBoundingClientRect();
+    cvs.width = Math.round(r.width * dpr); cvs.height = Math.round(r.height * dpr);
+    const cx = cvs.getContext('2d'); cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.clearRect(0, 0, r.width, r.height);
+    return { cx, w: r.width, h: r.height };
+  }
+  function niceTicks(lo, hi, count) {
+    const span = hi - lo, raw = span / count, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 5, 10].map(m => m * mag).find(s => s >= raw) || raw;
+    const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6));
+    return out;
+  }
+  function roundRectTop(cx, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h);
+    cx.beginPath(); cx.moveTo(x, y + h); cx.lineTo(x, y + r); cx.quadraticCurveTo(x, y, x + r, y);
+    cx.lineTo(x + w - r, y); cx.quadraticCurveTo(x + w, y, x + w, y + r); cx.lineTo(x + w, y + h); cx.closePath(); cx.fill();
+  }
+  function attachHover(cvs, tip, find) {
+    const move = e => {
+      const r = cvs.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      const hit = find(x, r.width);
+      if (!hit) { tip.style.display = 'none'; return; }
+      tip.innerHTML = hit.html; tip.style.display = 'block';
+      const tw = tip.offsetWidth;
+      tip.style.left = Math.max(0, Math.min(r.width - tw, hit.x - tw / 2)) + 'px';
+      cvs._hoverX = hit.x; cvs._redraw && cvs._redraw();
+    };
+    const leave = () => { tip.style.display = 'none'; cvs._hoverX = null; cvs._redraw && cvs._redraw(); };
+    cvs.onpointermove = move; cvs.onpointerdown = move; cvs.onpointerleave = leave;
+  }
+
+  // ---- night chart: breathing rate over the night + pause markers
+  function drawNightChart(cvs, tip, s) {
+    const redraw = () => {
+      const { cx, w, h } = prepCanvas(cvs);
+      const padL = 30, padR = 8, padT = 10, padB = 40, pauseBand = 14;
+      const plotH = h - padT - padB, dur = Math.max(60, s.durSec);
+      // on long sessions, smooth over 10-minute stretches so the overall shape reads
+      const win = s.durSec > 1800 ? 20 : 1;
+      const series = s.timeline.map((p, i) => {
+        if (p[1] == null) return [p[0], null];
+        let sum = 0, n = 0;
+        for (let k = Math.max(0, i - (win >> 1)); k <= Math.min(s.timeline.length - 1, i + (win >> 1)); k++)
+          if (s.timeline[k][1] != null) { sum += s.timeline[k][1]; n++; }
+        return [p[0], sum / n];
+      });
+      const pts = series.filter(p => p[1] != null);
+      if (!pts.length) { cx.fillStyle = C.text; cx.font = '13px system-ui'; cx.fillText('No breathing rate recorded in this session.', padL, h / 2); return; }
+      let lo = Math.min(...pts.map(p => p[1])), hi = Math.max(...pts.map(p => p[1]));
+      lo = Math.max(0, Math.floor(lo - 2)); hi = Math.ceil(hi + 2);
+      const X = sec => padL + (sec / dur) * (w - padL - padR);
+      const Y = v => padT + plotH - ((v - lo) / (hi - lo)) * plotH;
+      // grid + y ticks
+      cx.font = '11px system-ui'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
+      for (const t of niceTicks(lo, hi, 4)) {
+        cx.strokeStyle = C.grid; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(padL, Math.round(Y(t)) + 0.5); cx.lineTo(w - padR, Math.round(Y(t)) + 0.5); cx.stroke();
+        cx.fillStyle = C.text; cx.fillText(t, padL - 6, Y(t));
+      }
+      // x ticks: start, end, and whole hours between
+      cx.textAlign = 'center'; cx.textBaseline = 'top';
+      const startD = new Date(s.start), ticks = [];
+      const firstHour = new Date(startD); firstHour.setMinutes(0, 0, 0); firstHour.setHours(firstHour.getHours() + 1);
+      const hourStep = dur > 6 * 3600 ? 2 : 1;
+      for (let t = firstHour.getTime(); t < s.start + dur * 1000 - 20 * 60000; t += hourStep * 3600000) ticks.push(t);
+      const labelY = padT + plotH + pauseBand + 8;
+      const placed = [];
+      const putLabel = (t, align) => {
+        const x = X((t - s.start) / 1000), txt = fmtTime(t);
+        const tw = cx.measureText(txt).width;
+        const x0 = align === 'left' ? x : align === 'right' ? x - tw : x - tw / 2;
+        if (placed.some(([a, b]) => x0 < b + 8 && x0 + tw > a - 8)) return;
+        placed.push([x0, x0 + tw]); cx.textAlign = 'left'; cx.fillStyle = C.text; cx.fillText(txt, x0, labelY);
+      };
+      putLabel(s.start, 'left'); putLabel(s.start + dur * 1000, 'right'); ticks.forEach(t => putLabel(t, 'center'));
+      // pause markers in a band under the plot (red), alarms full height
+      const bandY = padT + plotH + 4;
+      for (const p of s.pauses) {
+        const x = X(p[0]);
+        cx.fillStyle = C.pause;
+        cx.fillRect(Math.round(x) - 1.5, bandY, 3, pauseBand - 4);
+        if (p[2]) { cx.globalAlpha = 0.18; cx.fillRect(Math.round(x) - 1, padT, 2, plotH); cx.globalAlpha = 1; }
+      }
+      // rate line (gaps where no reading), 2px
+      cx.strokeStyle = C.line; cx.lineWidth = 2; cx.lineJoin = 'round'; cx.lineCap = 'round';
+      cx.beginPath(); let pen = false, prev = null;
+      for (const p of series) {
+        if (p[1] == null || (prev && p[0] - prev[0] > 120)) { pen = false; }
+        if (p[1] == null) { prev = null; continue; }
+        const x = X(p[0]), y = Y(p[1]);
+        pen ? cx.lineTo(x, y) : cx.moveTo(x, y); pen = true; prev = p;
+      }
+      cx.stroke();
+      // hover crosshair
+      if (cvs._hoverX != null) {
+        cx.strokeStyle = 'rgba(233,237,245,0.35)'; cx.lineWidth = 1;
+        cx.beginPath(); cx.moveTo(Math.round(cvs._hoverX) + 0.5, padT); cx.lineTo(Math.round(cvs._hoverX) + 0.5, padT + plotH); cx.stroke();
+      }
+      cvs._geom = { X, dur, padL, padR }; cvs._series = series;
+    };
+    cvs._redraw = redraw; redraw();
+    attachHover(cvs, tip, (x, w) => {
+      const g = cvs._geom; if (!g) return null;
+      const sec = ((x - g.padL) / (w - g.padL - g.padR)) * g.dur;
+      if (sec < 0 || sec > g.dur) return null;
+      let best = null; for (const p of (cvs._series || s.timeline)) if (p[1] != null && (!best || Math.abs(p[0] - sec) < Math.abs(best[0] - sec))) best = p;
+      const near = s.pauses.find(p => Math.abs(p[0] - sec) < g.dur / 60);
+      if (!best && !near) return null;
+      const at = best ? best[0] : near[0];
+      let html = '<b>' + fmtTime(s.start + at * 1000) + '</b>';
+      if (best) html += '<br>' + Math.round(best[1]) + ' breaths/min';
+      if (near) html += '<br><span class="tk pause"></span>Pause, ' + near[1] + ' s' + (near[2] ? ' (alarm)' : '');
+      return { x: g.X(at), html };
+    });
+  }
+
+  // ---- trends chart: nightly average with the normal band and flag line
+  function drawTrendChart(cvs, tip, nights) {
+    const rows = nights.map((n, i) => ({ n, base: baselineBefore(nights, i) }));
+    const redraw = () => {
+      const { cx, w, h } = prepCanvas(cvs);
+      const padL = 30, padR = 12, padT = 12, padB = 26, plotH = h - padT - padB;
+      const vals = rows.flatMap(r => [r.n.avgRate, r.base != null ? r.base + FLAG_ABOVE : r.n.avgRate]);
+      const lo = Math.max(0, Math.floor(Math.min(...vals) - 2)), hi = Math.ceil(Math.max(...vals) + 2);
+      const step = rows.length > 1 ? (w - padL - padR) / (rows.length - 1) : 0;
+      const X = i => rows.length > 1 ? padL + i * step : (padL + w - padR) / 2;
+      const Y = v => padT + plotH - ((v - lo) / (hi - lo)) * plotH;
+      cx.font = '11px system-ui'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
+      for (const t of niceTicks(lo, hi, 4)) {
+        cx.strokeStyle = C.grid; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(padL, Math.round(Y(t)) + 0.5); cx.lineTo(w - padR, Math.round(Y(t)) + 0.5); cx.stroke();
+        cx.fillStyle = C.text; cx.fillText(t, padL - 6, Y(t));
+      }
+      // normal band (baseline to baseline + flag) as a light wash, flag line as a hairline
+      const withBase = rows.map((r, i) => [i, r.base]).filter(p => p[1] != null);
+      if (withBase.length > 1) {
+        cx.fillStyle = 'rgba(32,164,147,0.10)'; cx.beginPath();
+        withBase.forEach(([i, b], k) => k ? cx.lineTo(X(i), Y(b - 1.5)) : cx.moveTo(X(i), Y(b - 1.5)));
+        withBase.slice().reverse().forEach(([i, b]) => cx.lineTo(X(i), Y(b + 1.5)));
+        cx.closePath(); cx.fill();
+        cx.strokeStyle = C.flag; cx.lineWidth = 1; cx.beginPath();
+        withBase.forEach(([i, b], k) => k ? cx.lineTo(X(i), Y(b + FLAG_ABOVE)) : cx.moveTo(X(i), Y(b + FLAG_ABOVE)));
+        cx.stroke();
+      }
+      // connecting line, then dots with a surface ring; flagged nights in amber
+      cx.strokeStyle = C.line; cx.lineWidth = 2; cx.lineJoin = 'round'; cx.beginPath();
+      rows.forEach((r, i) => i ? cx.lineTo(X(i), Y(r.n.avgRate)) : cx.moveTo(X(i), Y(r.n.avgRate))); cx.stroke();
+      rows.forEach((r, i) => {
+        const flagged = r.base != null && r.n.avgRate - r.base >= FLAG_ABOVE;
+        cx.fillStyle = C.surface; cx.beginPath(); cx.arc(X(i), Y(r.n.avgRate), 6, 0, 7); cx.fill();
+        cx.fillStyle = flagged ? C.flag : C.line; cx.beginPath(); cx.arc(X(i), Y(r.n.avgRate), 4.5, 0, 7); cx.fill();
+      });
+      // x labels: first and last night
+      cx.fillStyle = C.text; cx.textBaseline = 'top';
+      cx.textAlign = 'left'; cx.fillText(fmtDay(rows[0].n.start), padL, padT + plotH + 8);
+      if (rows.length > 1) { cx.textAlign = 'right'; cx.fillText(fmtDay(rows[rows.length - 1].n.start), w - padR, padT + plotH + 8); }
+      if (cvs._hoverX != null) {
+        cx.strokeStyle = 'rgba(233,237,245,0.35)'; cx.lineWidth = 1;
+        cx.beginPath(); cx.moveTo(Math.round(cvs._hoverX) + 0.5, padT); cx.lineTo(Math.round(cvs._hoverX) + 0.5, padT + plotH); cx.stroke();
+      }
+      cvs._geom = { X, step, padL };
+    };
+    cvs._redraw = redraw; redraw();
+    attachHover(cvs, tip, x => {
+      const g = cvs._geom; if (!g) return null;
+      const i = rows.length > 1 ? Math.round((x - g.padL) / g.step) : 0;
+      if (i < 0 || i >= rows.length) return null;
+      const r = rows[i];
+      let html = '<b>' + fmtDay(r.n.start) + '</b><br>' + r.n.avgRate + ' breaths/min average';
+      if (r.base != null) html += '<br>Normal: ' + (Math.round(r.base * 10) / 10);
+      html += '<br>' + r.n.pauseCount + ' pauses';
+      return { x: g.X(i), html };
+    });
+  }
+
+  // ---- pauses-per-night columns
+  function drawPauseChart(cvs, tip, nights) {
+    const redraw = () => {
+      const { cx, w, h } = prepCanvas(cvs);
+      const padL = 30, padR = 12, padT = 8, padB = 8, plotH = h - padT - padB;
+      const maxV = Math.max(4, ...nights.map(n => n.pauseCount));
+      const hi = niceTicks(0, maxV, 2).slice(-1)[0] < maxV ? maxV : niceTicks(0, maxV, 2).slice(-1)[0];
+      const slot = (w - padL - padR) / nights.length, bw = Math.min(24, slot - 2);
+      const Y = v => padT + plotH - (v / hi) * plotH;
+      cx.font = '11px system-ui'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
+      for (const t of niceTicks(0, hi, 2)) {
+        cx.strokeStyle = C.grid; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(padL, Math.round(Y(t)) + 0.5); cx.lineTo(w - padR, Math.round(Y(t)) + 0.5); cx.stroke();
+        cx.fillStyle = C.text; cx.fillText(t, padL - 6, Y(t));
+      }
+      cx.fillStyle = C.pause;
+      nights.forEach((n, i) => {
+        if (!n.pauseCount) return;
+        const x = padL + i * slot + (slot - bw) / 2, y = Y(n.pauseCount);
+        roundRectTop(cx, x, y, bw, padT + plotH - y, 4);
+      });
+      if (cvs._hoverX != null) {
+        cx.strokeStyle = 'rgba(233,237,245,0.35)'; cx.lineWidth = 1;
+        cx.beginPath(); cx.moveTo(Math.round(cvs._hoverX) + 0.5, padT); cx.lineTo(Math.round(cvs._hoverX) + 0.5, padT + plotH); cx.stroke();
+      }
+      cvs._geom = { slot, padL };
+    };
+    cvs._redraw = redraw; redraw();
+    attachHover(cvs, tip, x => {
+      const g = cvs._geom; if (!g) return null;
+      const i = Math.floor((x - g.padL) / g.slot);
+      if (i < 0 || i >= nights.length) return null;
+      const n = nights[i];
+      return { x: g.padL + (i + 0.5) * g.slot, html: '<b>' + fmtDay(n.start) + '</b><br>' + n.pauseCount + ' pauses of 10 s or more' };
+    });
+  }
+
+  // ---- Reports tab
+  function renderReports() {
+    const all = loadSessions();
+    const root = $('reportsBody');
+    if (!all.length) {
+      root.innerHTML = '<div class="card"><p>No sessions yet. Start one from the Tonight tab, or load sample nights from the Trends tab to see what a report looks like.</p></div>';
+      return;
+    }
+    if (!all.some(s => s.id === selectedSessionId)) selectedSessionId = all[all.length - 1].id;
+    const s = all.find(x => x.id === selectedSessionId);
+    const cmp = s.avgRate ? compareToNormal(s) : null;
+    const longest = s.pauses.length ? Math.max(...s.pauses.map(p => p[1])) : 0;
+    const chips = all.slice(-10).reverse().map(x =>
+      '<button class="chip' + (x.id === s.id ? ' on' : '') + '" data-id="' + x.id + '">' + esc(fmtDay(x.start)) + (x.sample ? ' · sample' : x.sim ? ' · sim' : '') + '</button>').join('');
+    let normalLine = 'Needs 3 earlier nights of 30+ minutes';
+    if (cmp) normalLine = cmp.flagged ? '<span class="flagtxt">' + ICON_FLAG + 'Above normal</span> (' + (cmp.diff > 0 ? '+' : '') + cmp.diff + ' vs ' + cmp.base + ')' : 'Within normal (normal is ' + cmp.base + ')';
+    root.innerHTML =
+      '<div class="chips">' + chips + '</div>' +
+      '<div class="card">' +
+        '<h2>' + esc(fmtDay(s.start)) + ' · ' + esc(fmtTime(s.start)) + ' to ' + esc(fmtTime(s.start + s.durSec * 1000)) + (s.sample ? ' · sample data' : s.sim ? ' · simulation' : '') + '</h2>' +
+        '<div class="tiles">' +
+          '<div><div class="k">Average breathing</div><div class="v">' + (s.avgRate ?? '—') + '<small>' + (s.avgRate ? ' /min' : '') + '</small></div></div>' +
+          '<div><div class="k">Pauses ≥ 10 s</div><div class="v">' + s.pauseCount + '</div></div>' +
+          '<div><div class="k">Alarms</div><div class="v">' + s.alarms + '</div></div>' +
+        '</div>' +
+        '<div class="charttitle">Breathing rate through the night</div>' +
+        '<div class="chartwrap"><canvas id="nightChart" style="height:190px" aria-label="Breathing rate through the night"></canvas><div class="tip" id="nightTip"></div></div>' +
+        '<div class="legend"><span><i class="lk line"></i>Breaths per minute</span><span><i class="lk pause"></i>Pause of 10 s or more</span></div>' +
+        '<div class="kv"><span>Length</span><span>' + fmtDur(s.minutes) + '</span></div>' +
+        '<div class="kv"><span>Typical range</span><span>' + (s.lowRate ? s.lowRate + '–' + s.highRate + ' /min' : '—') + '</span></div>' +
+        '<div class="kv"><span>Longest pause</span><span>' + (longest ? longest + ' s' : 'None') + '</span></div>' +
+        '<div class="kv"><span>Waxing–waning pattern</span><span>' + (s.waxWane ? 'Seen' : 'Not seen') + '</span></div>' +
+        '<div class="kv"><span>Compared with normal</span><span>' + normalLine + '</span></div>' +
+        (s.pauses.length ? '<details><summary>Pause times</summary><table><tr><th>Time</th><th>Length</th><th>Alarm</th></tr>' +
+          s.pauses.map(p => '<tr><td>' + fmtTime(s.start + p[0] * 1000) + '</td><td>' + p[1] + ' s</td><td>' + (p[2] ? 'Yes' : 'No') + '</td></tr>').join('') + '</table></details>' : '') +
+      '</div>' +
+      '<button class="btn" id="shareBtn">Share summary</button>' +
+      '<p class="hint" id="shareMsg"></p>';
+    root.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { selectedSessionId = +b.dataset.id; renderReports(); }));
+    $('shareBtn').addEventListener('click', () => shareSummary(s, cmp, longest));
+    drawNightChart($('nightChart'), $('nightTip'), s);
+  }
+
+  function summaryText(s, cmp, longest) {
+    const lines = [
+      'Echo night summary' + (s.sample ? ' (sample data)' : s.sim ? ' (simulation)' : ''),
+      fmtDay(s.start) + ', ' + fmtTime(s.start) + ' to ' + fmtTime(s.start + s.durSec * 1000) + ' (' + fmtDur(s.minutes) + ')',
+      'Average breathing: ' + (s.avgRate ? s.avgRate + ' breaths/min' + (s.lowRate ? ' (typical ' + s.lowRate + '–' + s.highRate + ')' : '') : 'not recorded'),
+      'Breathing pauses of 10+ seconds: ' + s.pauseCount + (longest ? ' (longest ' + longest + ' s)' : ''),
+      'Alarms: ' + s.alarms,
+      'Waxing-and-waning pattern: ' + (s.waxWane ? 'seen' : 'not seen')
+    ];
+    if (cmp) lines.push(cmp.flagged ? 'Above normal: ' + s.avgRate + ' vs a usual ' + cmp.base + ' breaths/min' + (cmp.twoInRow ? ', 2 nights in a row' : '') : 'Within this person\'s normal range');
+    lines.push('', 'Echo is not a medical device. Talk to a doctor about any concerns.');
+    return lines.join('\n');
+  }
+  async function shareSummary(s, cmp, longest) {
+    const text = summaryText(s, cmp, longest);
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Echo night summary', text }); $('shareMsg').textContent = 'Shared.'; return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(text); $('shareMsg').textContent = 'Copied. Paste it into a text or email.'; }
+    catch (e) { $('shareMsg').innerHTML = '<textarea class="sharebox" readonly>' + esc(text) + '</textarea>'; }
+  }
+
+  // ---- Trends tab
+  const ICON_FLAG = '<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l7 13H1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6v4M8 12v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  const ICON_OK = '<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 8.2l2 2 4-4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function renderTrends() {
+    const all = loadSessions();
+    const nights = nightsForTrends(all).slice(-21);
+    const root = $('trendsBody');
+    const hasSample = all.some(s => s.sample);
+    const sampleBtn = hasSample
+      ? '<button class="btn secondary" id="sampleBtn">Remove sample nights</button>'
+      : '<button class="btn secondary" id="sampleBtn">Load 14 sample nights</button>';
+    if (nights.length < 4) {
+      root.innerHTML = '<div class="card"><h2>Not enough nights yet</h2><p>Trends needs at least 4 nights of 30 minutes or more. ' +
+        'Echo learns this person\'s normal breathing rate from the earlier nights, then compares each new night to it.</p>' +
+        '<p>You have ' + nights.length + ' so far.</p></div>' + sampleBtn +
+        '<p class="hint">Sample nights are made-up data for trying out this screen. They are labeled "sample" everywhere.</p>';
+      $('sampleBtn').addEventListener('click', toggleSample);
+      return;
+    }
+    const last = nights[nights.length - 1];
+    const cmp = compareToNormal(last);
+    let status = '<div class="trendstatus ok">' + ICON_OK + 'Within normal</div><p>Last night\'s average was ' + last.avgRate + ' breaths/min. This person\'s normal is about ' + (cmp ? cmp.base : '—') + '.</p>';
+    if (cmp && cmp.flagged) {
+      status = '<div class="trendstatus flag">' + ICON_FLAG + (cmp.twoInRow ? 'Above normal 2 nights in a row' : 'Above normal last night') + '</div>' +
+        '<p>Last night\'s average was ' + last.avgRate + ' breaths/min, ' + cmp.diff + ' above this person\'s normal of ' + cmp.base + '. ' +
+        (cmp.twoInRow ? 'A breathing rate that stays higher than usual can be an early sign of illness. Consider checking in with them or calling their doctor.' : 'One high night can happen for many reasons. Echo will keep watching.') + '</p>';
+    }
+    const recent = nights.slice(-7);
+    const waxNights = recent.filter(n => n.waxWane).length;
+    root.innerHTML =
+      '<div class="card">' + status + '</div>' +
+      '<div class="card">' +
+        '<div class="charttitle">Average breathing rate per night</div>' +
+        '<div class="chartwrap"><canvas id="trendChart" style="height:180px" aria-label="Average breathing rate per night"></canvas><div class="tip" id="trendTip"></div></div>' +
+        '<div class="legend"><span><i class="lk band"></i>Normal range</span><span><i class="lk flagline"></i>Above-normal line (normal + ' + FLAG_ABOVE + ')</span></div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<div class="charttitle">Pauses of 10 s or more per night</div>' +
+        '<div class="chartwrap"><canvas id="pauseChart" style="height:90px" aria-label="Pauses per night"></canvas><div class="tip" id="pauseTip"></div></div>' +
+        '<div class="kv" style="margin-top:8px"><span>Waxing–waning pattern</span><span>' + waxNights + ' of the last ' + recent.length + ' nights</span></div>' +
+        '<details><summary>All nights as a table</summary><table><tr><th>Night</th><th>Avg</th><th>Normal</th><th>Pauses</th></tr>' +
+          nights.slice().reverse().map(n => { const c = compareToNormal(n); return '<tr><td>' + fmtDay(n.start) + (n.sample ? '*' : '') + '</td><td>' + n.avgRate + '</td><td>' + (c ? c.base : '—') + '</td><td>' + n.pauseCount + '</td></tr>'; }).join('') +
+        '</table>' + (hasSample ? '<p class="hint">* sample data</p>' : '') + '</details>' +
+      '</div>' + sampleBtn;
+    $('sampleBtn').addEventListener('click', toggleSample);
+    drawTrendChart($('trendChart'), $('trendTip'), nights);
+    drawPauseChart($('pauseChart'), $('pauseTip'), nights);
+  }
+
+  // ---- sample nights: 12 normal nights around 14/min, then 2 higher nights
+  function makeSampleNights() {
+    let seed = 42; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const out = [], today = new Date(); today.setHours(0, 0, 0, 0);
+    for (let k = 14; k >= 1; k--) {
+      const start = new Date(today.getTime() - k * 86400000); start.setHours(22, 25 + Math.floor(rnd() * 50), 0, 0);
+      const durSec = Math.round((6.6 + rnd() * 1.6) * 3600);
+      const high = k <= 2, base = high ? 18.6 + rnd() * 0.8 : 13.6 + rnd() * 1.2;
+      const timeline = [];
+      for (let t = 0; t <= durSec; t += 30) {
+        const sleepDip = -0.9 * Math.sin(Math.PI * t / durSec);
+        const v = base + sleepDip + 0.8 * Math.sin(t / 1900 + k) + (rnd() - 0.5) * 1.2;
+        timeline.push([t, rnd() < 0.02 ? null : Math.round(v)]);
+      }
+      const nP = high ? 4 + Math.floor(rnd() * 3) : Math.floor(rnd() * 3);
+      const pauses = [];
+      for (let i = 0; i < nP; i++) pauses.push([Math.round(rnd() * durSec), 10 + Math.floor(rnd() * 8), 0]);
+      pauses.sort((a, b) => a[0] - b[0]);
+      out.push(finishSession({ id: start.getTime(), start: start.getTime(), durSec, timeline, pauses, alarms: 0, waxWane: high && rnd() < 0.6, sample: true }));
+    }
+    return out;
+  }
+  function finishSession(s) {
+    const rates = s.timeline.map(p => p[1]).filter(v => v != null).sort((a, b) => a - b);
+    s.minutes = Math.round(s.durSec / 60);
+    // the middle value (median), so a few odd readings don't pull it outside the typical range
+    s.avgRate = rates.length ? Math.round(median(rates)) : null;
+    s.lowRate = rates.length ? rates[Math.floor(rates.length * 0.1)] : null;
+    s.highRate = rates.length ? rates[Math.floor(rates.length * 0.9)] : null;
+    s.pauseCount = s.pauses.length;
+    return s;
+  }
+  function toggleSample() {
+    const all = loadSessions();
+    if (all.some(s => s.sample)) saveSessions(all.filter(s => !s.sample));
+    else saveSessions(all.concat(makeSampleNights()));
+    selectedSessionId = null;
+    renderTrends();
   }
 
   // ---------------------------------------------------------------------------
@@ -981,7 +1415,7 @@
   }
 
   // test hook so automated checks can read state (harmless in normal use)
-  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT }; } };
+  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, pauses: sessionLog ? sessionLog.pauses.slice() : null }; } };
 })();
 </script>
 </body>

@@ -10,7 +10,7 @@ Echo is not a medical device.
 
 | Path | What it is |
 |---|---|
-| `app/index.html` | **The Echo app.** Tabs for Tonight, Trends, Reports and Settings. Tonight has one-tap start, automatic tone tuning, live breathing, a dim bedside-clock night screen and the pause alarm |
+| `app/index.html` | **The Echo app.** **Tonight:** one-tap start, automatic tone tuning, live breathing, a dim bedside-clock night screen and the pause alarm. **Reports:** a summary of each night with a breathing-rate graph, pause times and a Share button. **Trends:** learns the person's normal nightly breathing rate and flags nights 3+ breaths/min above it. **Settings:** alarm time, sound and a family contact |
 | `app/echo-breathing-scope.html` | Engineering view: live breathing rate, chest-motion wave, carrier graph and the breathing pattern detector |
 | `tools/echo-sonar-test.html` | The first hardware test: checks that a phone can send and hear the ultrasonic tone |
 | `tests/` | Simulation tests for the signal processing (run with Node) |
@@ -46,6 +46,12 @@ ngrok http 8000          # in a second terminal, for an https link to open on a 
 Then open `https://<your-ngrok-link>/app/index.html` on the phone (or `app/echo-breathing-scope.html` for the engineering view).
 
 **Simulation mode** (no microphone): add `?sim=steady`, `?sim=pause`, `?sim=wax` or `?sim=irregular` to the link, plus `&speed=10` to run 10× faster. `pause` breathes normally, then stops for 40 s every 2 minutes, which should set off the alarm.
+
+## Saved nights, Reports and Trends
+
+Every session is saved on the phone only (browser storage). Each saved night keeps the median breathing rate for every 30 seconds, every pause of 10 s or more, alarms, and whether a waxing-and-waning pattern appeared.
+
+Trends uses nights of 30 minutes or more. A night's "normal" is the median of the nightly averages from up to 14 earlier nights (at least 3 needed). A night is flagged when its average is 3 or more breaths/min above normal. The Trends tab can load 14 labeled sample nights for demos.
 
 ## Pause alarm
 
