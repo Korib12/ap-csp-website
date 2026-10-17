@@ -10,7 +10,8 @@ Echo is not a medical device.
 
 | Path | What it is |
 |---|---|
-| `app/echo-breathing-scope.html` | The current app: live breathing rate, chest-motion wave, and the breathing pattern detector |
+| `app/index.html` | **The Echo app.** Tabs for Tonight, Trends, Reports and Settings. Tonight has one-tap start, automatic tone tuning, live breathing, a dim bedside-clock night screen and the pause alarm |
+| `app/echo-breathing-scope.html` | Engineering view: live breathing rate, chest-motion wave, carrier graph and the breathing pattern detector |
 | `tools/echo-sonar-test.html` | The first hardware test: checks that a phone can send and hear the ultrasonic tone |
 | `tests/` | Simulation tests for the signal processing (run with Node) |
 
@@ -42,9 +43,13 @@ python3 -m http.server 8000
 ngrok http 8000          # in a second terminal, for an https link to open on a phone
 ```
 
-Then open `https://<your-ngrok-link>/app/echo-breathing-scope.html` on the phone.
+Then open `https://<your-ngrok-link>/app/index.html` on the phone (or `app/echo-breathing-scope.html` for the engineering view).
 
-**Simulation mode** (no microphone): add `?sim=steady`, `?sim=wax` or `?sim=irregular` to the link, plus `&speed=10` to run 10× faster.
+**Simulation mode** (no microphone): add `?sim=steady`, `?sim=pause`, `?sim=wax` or `?sim=irregular` to the link, plus `&speed=10` to run 10× faster. `pause` breathes normally, then stops for 40 s every 2 minutes, which should set off the alarm.
+
+## Pause alarm
+
+Echo arms itself once it has seen steady breathing (6 or more breaths in the last minute). While armed, it sounds an alarm if no breath is detected for the set time (15, 20 or 30 s, default 20). In simulation, steady, irregular and waxing-and-waning breathing ran 5 minutes each with no alarms, and breathing that stopped at 70, 190 and 310 s set off alarms at 93, 212 and 331 s.
 
 ## Tests
 

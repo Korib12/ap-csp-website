@@ -24,6 +24,7 @@ const cases=[
  ['Waxing-waning 55 s cycle, 15 s pause', csr(55,15,8), ()=>18],
  ['Waxing-waning 45 s cycle, 10 s pause', csr(45,10,6), ()=>16],
  ['Your test: 40 s up/down + 10 s pause', csr(50,10,8), ()=>15],
+ ['Steady with repeated stops',    t=>((t%120)>=70&&(t%120)<110)?0:4, ()=>15],
  ['Waxing-waning, no full pause',   t=>1+7*Math.abs(Math.sin(Math.PI*t/60)), ()=>16],
 ];
 for(const [name,dF,rF,nz] of cases){

@@ -517,7 +517,9 @@
     res.cycleStrength = best;
     res.cycleSec = bestLag;
     const enoughCycles = bestLag && durSec >= 2 * bestLag;
-    res.waxWane = !!(enoughCycles && best > 0.35 && res.depth > 0.6);
+    // breaths must actually grow and shrink, not just stop and start at one size
+    const graded = res.ampSpread !== undefined && res.ampSpread > 0.4;
+    res.waxWane = !!(enoughCycles && best > 0.35 && res.depth > 0.6 && graded);
   
     if (res.waxWane) res.label = 'Waxing-and-waning pattern';
     else if (res.regular === false || res.pauses.length > 0) res.label = 'Irregular';
