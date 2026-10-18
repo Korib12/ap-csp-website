@@ -190,7 +190,7 @@
       <div class="card">
         <ol class="steps">
           <li><div><b>Plug in the phone.</b> Echo keeps the screen on all night.</div></li>
-          <li><div><b>Prop it on the bed, next to the pillow,</b> about 30 cm away, with the bottom edge pointing at the chest or belly. When someone lies down, the belly usually moves more than the chest.</div></li>
+          <li><div><b>Put it higher than the bed, looking down at the chest,</b> about 30–50 cm away: on a nightstand or a stack of books, tilted down, with the bottom edge aimed at the chest. Sonar only sees movement toward or away from the phone, and a sleeping chest rises upward, so the phone has to look down at it.</div></li>
           <li><div><b>Turn the phone's volume up</b> and take out any earbuds.</div></li>
           <li><div><b>Tap Start.</b> Echo tunes itself in a few seconds, then watches quietly.</div></li>
         </ol>
@@ -226,7 +226,7 @@
           <label>Distance<select id="tDist"><option>20 cm</option><option>40 cm</option><option>60 cm</option><option>90 cm</option></select></label>
           <label>Covering<select id="tCover"><option>T-shirt</option><option>Tight hoodie</option><option>Loose hoodie</option><option>Thin blanket</option><option>Thick comforter</option></select></label>
           <label>Your pace<select id="tPace"><option>10 /min</option><option selected>15 /min</option><option>30 /min</option><option>Normal</option></select></label>
-          <label>Position<select id="tPos"><option>Lying down</option><option>Sitting</option></select></label>
+          <label>Placement<select id="tPos"><option>Lying, phone above angled down</option><option>Lying, phone on headboard</option><option>Lying, phone beside (flat)</option><option>Lying on side, facing phone</option><option>Sitting, facing chest</option></select></label>
         </div>
         <div class="tlive">
           <div><div class="k">Rate (last 30 s)</div><div class="v" id="tRate">—</div></div>
@@ -1438,7 +1438,7 @@
       rows.map(t => '<tr><td>' + t.dist + '</td><td>' + t.cover + '</td><td>' + t.pace + '</td><td>' + t.rate + '</td><td>' + t.clarity + '</td></tr>').join('') +
       '</table><div class="row"><button class="btn secondary" id="tCopy">Copy results</button><button class="btn secondary" id="tClear">Clear</button></div>';
     $('tCopy').onclick = async () => {
-      const head = 'Echo distance and blanket tests\nDistance | Covering | Position | Real pace | Echo reading | Error | Breath clarity | Tone signal | Tone | Strength | Time';
+      const head = 'Echo distance and blanket tests\nDistance | Covering | Placement | Real pace | Echo reading | Error | Breath clarity | Tone signal | Tone | Strength | Time';
       const body = rows.map(t => [t.dist, t.cover, t.pos, t.pace, t.rate, t.err, t.clarity + ' (' + t.clarNum + ')', t.peak, t.tone, t.vol, new Date(t.at).toLocaleString()].join(' | ')).join('\n');
       try { await navigator.clipboard.writeText(head + '\n' + body); $('tMsg').textContent = 'Copied. Paste it into your notes or here.'; }
       catch (e) { $('tTable').insertAdjacentHTML('beforeend', '<textarea class="sharebox" readonly>' + esc(head + '\n' + body) + '</textarea>'); }
