@@ -280,7 +280,13 @@
       <div class="field">
         <label>Tone strength</label>
         <div class="seg" id="volSeg"><button data-v="normal">Normal</button><button data-v="high">High</button></div>
-        <div class="help">High sends a stronger tone, which helps at longer distances and through blankets. It may be faintly audible to some people. Applies the next time you start.</div>
+        <div class="help">Normal is the level used in the accuracy tests. High is louder, which may help at longer distances, but can distort on some phones. Applies the next time you start.</div>
+      </div>
+      <div class="field">
+        <label>Demo mode (fake breathing, no microphone)</label>
+        <div class="seg" id="demoSeg"><button data-v="off">Off</button><button data-v="steady">Steady</button><button data-v="pause">Pauses</button><button data-v="wax">Wax–wane</button></div>
+        <div class="seg" id="speedSeg" style="margin-top:8px"><button data-v="1">Real speed</button><button data-v="10">10× faster</button></div>
+        <div class="help">For trying the app and recording demos. An orange banner shows whenever demo mode is on, and saved nights are marked "sim".</div>
       </div>
       <div class="field switch">
         <label for="testSw" style="margin:0">Testing tools</label>
@@ -296,9 +302,13 @@
     </div>
     <div class="card">
       <h2>Tone</h2>
+      <div class="field">
+        <label>Tone</label>
+        <div class="seg" id="toneSeg"><button data-v="auto">Auto-tune</button><button data-v="16600">Fixed 16.6 kHz</button></div>
+      </div>
       <div class="kv"><span>Current tone</span><span id="toneV">Not tuned yet</span></div>
       <div class="kv"><span>Signal strength</span><span id="peakV">—</span></div>
-      <p class="help" style="margin-top:8px">Echo picks the tone automatically each time you start. The highest tone that works well is chosen, since it's the hardest to hear.</p>
+      <p class="help" style="margin-top:8px">Echo tries tones from 16.6 to 20 kHz each time you start and uses the one this phone hears most strongly.</p>
     </div>
     <p class="fine">Echo is a student project and not a medical device. It can miss events or give false alarms, so don't rely on it for anyone's safety. Talk to a doctor about breathing concerns.<br><br>Breath-by-breath analysis adapted from <a href="https://github.com/RyanSeanPhillips/PhysioMetrics">PhysioMetrics</a> by Ryan Sean Phillips (MIT License).</p>
   </section>
@@ -345,7 +355,10 @@
     sound: store.get('sound', true),
     cName: store.get('cName', ''),
     cPhone: store.get('cPhone', ''),
-    vol: store.get('vol', 'high'),
+    vol: store.get('vol2', 'normal'),
+    demo: store.get('demo', 'off'),
+    tone: store.get('tone', 'auto'),
+    demoSpeed: store.get('demoSpeed', 10),
     testing: store.get('testing', false)
   };
 
@@ -367,7 +380,7 @@
   const SLOW_HZ = 10;                 // slow (I, Q) samples per second
   const N = SLOW_HZ * 240;            // keep 4 minutes
   const WAVE_N = SLOW_HZ * 30;        // the live wave shows the last 30 s
-  const RATE_WIN_S = 40;             // breathing rate uses the last 40 s (was 28) for more averaging
+  const RATE_WIN_S = 28;             // breathing rate uses the last 28 s (the setting used in the accuracy tests)
   let ringI = new Float32Array(N), ringQ = new Float32Array(N);
   let ringFilled = 0, ringHead = 0;
   let audioCtx = null, osc = null, gain = null, analyser = null, micStream = null, srcNode = null, proc = null, sink = null;
@@ -907,8 +920,8 @@
     }
     const best = Math.max(...results.map(r => r.p));
     if (best < 35) return null;
-    const good = results.filter(r => r.p >= 0.85 * best);
-    return good[good.length - 1];
+    // use the strongest tone (on this phone it was 16.6 kHz in the accuracy tests)
+    return results.find(r => r.p === best);
   }
 
   // ---------------------------------------------------------------------------
@@ -934,12 +947,12 @@
       binHz = sampleRate / analyser.fftSize;
       srcNode.connect(analyser);
       osc = audioCtx.createOscillator(); gain = audioCtx.createGain();
-      osc.type = 'sine'; osc.frequency.value = 16600; gain.gain.value = settings.vol === 'high' ? 0.9 : 0.45;
+      osc.type = 'sine'; osc.frequency.value = 16600; gain.gain.value = settings.vol === 'high' ? 0.6 : 0.35;   // 0.35 = the level used in the accuracy tests
       osc.connect(gain); gain.connect(audioCtx.destination); osc.start();
       if (audioCtx.state === 'suspended') await audioCtx.resume();
 
       show('tCalib');
-      const pick = await calibrate();
+      const pick = settings.tone === 'auto' ? await calibrate() : { f: +settings.tone, p: 0 };
       if (!pick) {
         $('idleMsg').textContent = "Couldn't hear the tone. Turn the phone's volume up, take out earbuds, close other tabs using the mic, and try again.";
         stop(); return;
@@ -948,7 +961,7 @@
       osc.frequency.setValueAtTime(pick.f, audioCtx.currentTime);
       $('toneV').textContent = (pick.f / 1000).toFixed(1) + ' kHz';
 
-      proc = audioCtx.createScriptProcessor(2048, 1, 1);
+      proc = audioCtx.createScriptProcessor(4096, 1, 1);
       sink = audioCtx.createGain(); sink.gain.value = 0;
       srcNode.connect(proc); proc.connect(sink); sink.connect(audioCtx.destination);
       proc.onaudioprocess = onAudio;
@@ -1416,7 +1429,7 @@
     const r = median(tRates), c = median(tClars), [word, cls] = clarityWord(c);
     $('tRate').textContent = Math.round(r) + ' /min';
     $('tClar').innerHTML = '<span class="' + cls + '">' + word + '</span> <small style="color:var(--faint);font-weight:500">' + c.toFixed(0) + '</small>';
-    $('tPeak').textContent = carrierPeak;
+    $('tPeak').innerHTML = carrierPeak + ' <small style="color:var(--faint);font-weight:500">' + (SIM ? 'sim' : (demodFreq / 1000).toFixed(1) + ' kHz') + '</small>';
   }
   function renderTests() {
     const rows = store.get('tests', []);
@@ -1459,7 +1472,7 @@
   document.querySelectorAll('#volSeg button').forEach(b => {
     b.classList.toggle('on', b.dataset.v === settings.vol);
     b.addEventListener('click', () => {
-      settings.vol = b.dataset.v; store.set('vol', settings.vol);
+      settings.vol = b.dataset.v; store.set('vol2', settings.vol);
       document.querySelectorAll('#volSeg button').forEach(x => x.classList.toggle('on', x === b));
     });
   });
@@ -1478,10 +1491,29 @@
   // "pause" breathes normally, then stops for 40 s every 2 minutes.
   // ---------------------------------------------------------------------------
   const params = new URLSearchParams(location.search);
-  const SIM = params.get('sim');
-  const SIM_SPEED = Math.max(1, Math.min(50, +params.get('speed') || 1));
+  let SIM = params.get('sim') || (settings.demo !== 'off' ? settings.demo : null);
+  let SIM_SPEED = Math.max(1, Math.min(50, +params.get('speed') || (params.get('sim') ? 1 : settings.demoSpeed)));
   let simTimer = null, simT = 0, simPh = 0;
   if (SIM) $('simBanner').classList.add('show');
+  function wireSeg(id, key, cast, after) {
+    document.querySelectorAll('#' + id + ' button').forEach(b => {
+      b.classList.toggle('on', String(settings[key]) === b.dataset.v);
+      b.addEventListener('click', () => {
+        if (running) { alert('Stop the current session first.'); return; }
+        settings[key] = cast(b.dataset.v); store.set(key, settings[key]);
+        document.querySelectorAll('#' + id + ' button').forEach(x => x.classList.toggle('on', x === b));
+        after && after();
+      });
+    });
+  }
+  const applyDemo = () => {
+    SIM = settings.demo !== 'off' ? settings.demo : null; SIM_SPEED = settings.demoSpeed;
+    $('simBanner').textContent = 'DEMO MODE: fake breathing, no microphone';
+    $('simBanner').classList.toggle('show', !!SIM);
+  };
+  wireSeg('demoSeg', 'demo', String, applyDemo);
+  wireSeg('toneSeg', 'tone', String);
+  wireSeg('speedSeg', 'demoSpeed', Number, applyDemo);
   function simDepthMM(t) {
     if (SIM === 'pause') { const p = t % 120; return p >= 70 && p < 110 ? 0 : 4; }
     if (SIM === 'wax') { const p = t % 50; return p < 40 ? 7 * Math.sin(Math.PI * p / 40) : 0; }
