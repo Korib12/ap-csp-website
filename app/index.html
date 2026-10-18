@@ -3,180 +3,273 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0d14">
+<meta name="theme-color" content="#F5EFE4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Echo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..700&display=swap" rel="stylesheet">
 <style>
+  /* Echo — warm shell + sea-glass teal + coral. Night screens go dark and warm. */
   :root {
-    --bg: #0a0d14;
-    --panel: #121826;
-    --edge: #1f2738;
-    --ink: #e9edf5;
-    --dim: #8a93a6;
-    --faint: #586176;
-    --breath: #5fd4c4;
-    --breath-dim: #1f5a53;
-    --amber: #f0b45a;
-    --alarm: #ff5a5f;
-    --clock: #b8473d;
-    --mono: "SF Mono", "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    --tabbar: 64px;
+    --bg: #F5EFE4;          /* shell */
+    --panel: #FFFBF5;       /* paper card */
+    --wash: #E3EFEB;        /* sea-glass wash */
+    --edge: #E4D8C5;        /* sand line */
+    --sand: #EADCC6;
+    --ink: #23312F;
+    --deep: #17504D;        /* deep teal: headings, primary button */
+    --dim: #5E6B68;
+    --faint: #7E8784;
+    --breath: #2A7D76;      /* teal: live line, "ok" */
+    --breath-dim: #A9D6CF;  /* light teal */
+    --amber: #8A6534;       /* tan ink: "wait" / flag text */
+    --tan: #C9A97E;
+    --coral: #E8776B;
+    --alarm: #B4483E;       /* coral ink: alerts as text */
+    --night: #0F2624;
+    --clock: #C9A97E;
+    --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --tabbar: 66px;
+    --ease: cubic-bezier(.22,.8,.2,1);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
-  body { min-height: 100vh; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-optical-sizing: auto; }
+  body { min-height: 100vh; -webkit-font-smoothing: antialiased; }
   button { font-family: inherit; }
-  .page { max-width: 560px; margin: 0 auto; padding: calc(16px + env(safe-area-inset-top)) 16px calc(var(--tabbar) + 28px + env(safe-area-inset-bottom)); }
+  .page { max-width: 560px; margin: 0 auto; padding: calc(18px + env(safe-area-inset-top)) 18px calc(var(--tabbar) + 30px + env(safe-area-inset-bottom)); }
   .view { display: none; }
-  .view.active { display: block; }
-  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 4px 0 2px; }
-  .sub { color: var(--dim); font-size: 14px; line-height: 1.45; margin: 0 0 18px; }
-  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-  .card h2 { font-size: 13px; font-weight: 600; color: var(--dim); margin: 0 0 10px; }
-  .btn { appearance: none; border: none; cursor: pointer; width: 100%; padding: 17px; border-radius: 14px; font-size: 17px; font-weight: 650; background: var(--breath); color: #04211d; }
-  .btn:active { transform: scale(0.99); }
-  .btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--edge); font-weight: 550; font-size: 15px; padding: 13px; }
-  .btn.danger { background: var(--alarm); color: #2b0204; }
+  .view.active { display: block; animation: viewIn .45s var(--ease) both; }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } }
+  h1 { font-size: 38px; font-weight: 600; font-variation-settings: "opsz" 96; letter-spacing: -0.035em; line-height: 1; margin: 10px 0 8px; color: var(--deep); }
+  .sub { color: var(--dim); font-size: 15px; line-height: 1.5; margin: 0 0 20px; max-width: 36em; }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 22px; padding: 18px; margin-bottom: 12px; }
+  .card h2 { font-size: 15px; font-weight: 650; color: var(--deep); margin: 0 0 12px; letter-spacing: -0.01em; }
+  .btn { appearance: none; border: none; cursor: pointer; width: 100%; padding: 18px; border-radius: 999px; font-size: 17px; font-weight: 650; background: var(--deep); color: #FFF7EC; letter-spacing: -0.01em; transition: transform .15s var(--ease), background .2s; }
+  .btn:active { transform: scale(0.98); }
+  .btn.secondary { background: transparent; color: var(--deep); border: 1.5px solid var(--edge); font-weight: 600; font-size: 15px; padding: 14px; }
+  .btn.danger { background: var(--alarm); color: #fff; }
   .row { display: flex; gap: 10px; }
   .row > * { flex: 1; }
+  .linkbtn { appearance: none; border: none; background: none; padding: 6px 0; color: var(--deep); font-size: 14px; font-weight: 600; text-decoration: underline; text-decoration-color: var(--tan); text-underline-offset: 4px; cursor: pointer; }
 
   /* ---------- Tonight: idle ---------- */
+  .hero { position: relative; display: flex; align-items: center; justify-content: center; height: 210px; margin: 4px 0 6px; }
+  .orb { position: absolute; width: 112px; height: 112px; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #FFF7EC 0%, var(--breath-dim) 45%, var(--breath) 100%); box-shadow: 0 18px 50px -12px rgba(42,125,118,.45); animation: breathe 5.5s ease-in-out infinite; }
+  .ring { position: absolute; width: 112px; height: 112px; border-radius: 50%; border: 1.5px solid var(--breath); opacity: 0; animation: ripple 5.5s var(--ease) infinite; }
+  .ring:nth-child(2) { animation-delay: 1.1s; } .ring:nth-child(3) { animation-delay: 2.2s; border-color: var(--coral); }
+  @keyframes breathe { 0%,100% { transform: scale(.86); } 45% { transform: scale(1.06); } }
+  @keyframes ripple { 0% { transform: scale(.9); opacity: .55; } 100% { transform: scale(2.6); opacity: 0; } }
   .steps { margin: 0; padding: 0; list-style: none; counter-reset: s; }
-  .steps li { counter-increment: s; display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--edge); font-size: 14px; line-height: 1.45; color: var(--dim); }
+  .steps li { counter-increment: s; display: flex; gap: 14px; padding: 12px 0; border-top: 1px solid var(--edge); font-size: 14px; line-height: 1.5; color: var(--dim); }
   .steps li:first-child { border-top: none; padding-top: 0; }
-  .steps li::before { content: counter(s); flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--bg); border: 1px solid var(--edge); color: var(--breath); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-  .steps b { color: var(--ink); font-weight: 600; }
+  .steps li:last-child { padding-bottom: 0; }
+  .steps li::before { content: counter(s); flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--wash); color: var(--deep); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .steps b { color: var(--ink); font-weight: 650; }
 
   /* ---------- Tonight: calibrating ---------- */
-  .progress { height: 6px; border-radius: 3px; background: var(--edge); overflow: hidden; margin: 14px 0 8px; }
-  .progress > div { height: 100%; width: 0; background: var(--breath); transition: width 0.25s; }
-  .calib-freq { font-family: var(--mono); font-size: 13px; color: var(--dim); }
+  .progress { height: 8px; border-radius: 4px; background: var(--wash); overflow: hidden; margin: 14px 0 10px; }
+  .progress > div { height: 100%; width: 0; background: var(--breath); border-radius: 4px; transition: width 0.25s; }
+  .calib-freq { font-size: 14px; color: var(--dim); font-variant-numeric: tabular-nums; }
 
   /* ---------- Tonight: watching ---------- */
-  .status { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: var(--bg); border: 1px solid var(--edge); font-size: 13px; font-weight: 550; color: var(--dim); }
+  .status { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--panel); border: 1px solid var(--edge); font-size: 13px; font-weight: 600; color: var(--dim); }
   .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
   .status.ok { color: var(--breath); } .status.ok .dot { background: var(--breath); }
-  .status.wait { color: var(--amber); } .status.wait .dot { background: var(--amber); }
-  .status.bad { color: var(--alarm); } .status.bad .dot { background: var(--alarm); }
-  .big { display: flex; align-items: baseline; gap: 10px; margin: 16px 0 4px; }
-  .big .num { font-size: 72px; font-weight: 700; letter-spacing: -0.04em; line-height: 0.9; font-variant-numeric: tabular-nums; }
-  .big .num.idle { color: var(--faint); }
+  .status.wait { color: var(--amber); } .status.wait .dot { background: var(--tan); }
+  .status.bad { color: var(--alarm); } .status.bad .dot { background: var(--coral); }
+  .big { display: flex; align-items: baseline; gap: 12px; margin: 20px 0 4px; }
+  .big .num { font-size: 96px; font-weight: 300; font-variation-settings: "opsz" 96; letter-spacing: -0.05em; line-height: 0.85; font-variant-numeric: tabular-nums; color: var(--deep); }
+  .big .num.idle { color: var(--sand); }
   .big .unit { color: var(--dim); font-size: 15px; line-height: 1.3; }
   canvas { display: block; width: 100%; }
-  #wave { height: 120px; border-radius: 12px; background: #070a10; margin: 12px 0 4px; }
-  .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 10px; margin-top: 12px; }
-  .meta .k { font-size: 11px; color: var(--dim); margin-bottom: 3px; }
-  .meta .v { font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  #wave { height: 130px; border-radius: 20px; background: var(--wash); margin: 14px 0 4px; }
+  .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 10px; margin-top: 12px; }
+  .meta .k { font-size: 12px; color: var(--dim); margin-bottom: 4px; }
+  .meta .v { font-size: 18px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
   .bars { display: inline-flex; gap: 3px; align-items: flex-end; height: 16px; }
-  .bars i { width: 5px; border-radius: 1px; background: var(--edge); }
+  .bars i { width: 5px; border-radius: 2px; background: var(--sand); }
   .bars i:nth-child(1) { height: 25%; } .bars i:nth-child(2) { height: 50%; } .bars i:nth-child(3) { height: 75%; } .bars i:nth-child(4) { height: 100%; }
   .bars i.on { background: var(--breath); }
-  .countdown { display: none; margin-top: 12px; padding: 12px; border-radius: 12px; background: rgba(240,180,90,0.08); border: 1px solid rgba(240,180,90,0.35); color: var(--amber); font-size: 14px; font-weight: 600; }
+  .countdown { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: #FBE7E2; border: 1px solid #F1C2B9; color: var(--alarm); font-size: 14px; font-weight: 600; }
   .countdown.show { display: block; }
-  .hint { font-size: 12px; color: var(--faint); line-height: 1.5; margin: 10px 0 0; }
+  .hint { font-size: 13px; color: var(--faint); line-height: 1.5; margin: 10px 0 0; }
 
-  /* ---------- Night screen ---------- */
-  #night { position: fixed; inset: 0; background: #000; z-index: 40; display: none; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+  /* ---------- Night screen: dark and warm, nothing moves but the dot ---------- */
+  #night { position: fixed; inset: 0; background: var(--night); z-index: 40; display: none; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
   #night.show { display: flex; }
-  #nightClock { font-size: 22vw; font-weight: 300; color: var(--clock); opacity: 0.55; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1; }
-  @media (min-width: 560px) { #nightClock { font-size: 120px; } }
-  #nightDot { width: 14px; height: 14px; border-radius: 50%; background: var(--breath); margin-top: 28px; opacity: 0.25; transition: opacity 0.2s, transform 0.2s; }
-  #nightText { margin-top: 14px; font-size: 13px; color: #3c4252; }
+  #nightClock { font-size: 24vw; font-weight: 300; font-variation-settings: "opsz" 96; color: var(--clock); opacity: 0.5; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; line-height: 1; }
+  @media (min-width: 560px) { #nightClock { font-size: 132px; } }
+  #nightDot { width: 14px; height: 14px; border-radius: 50%; background: #5FA89F; margin-top: 30px; opacity: 0.25; }
+  #nightText { margin-top: 16px; font-size: 13px; color: #4F6E69; }
 
   /* ---------- Alarm ---------- */
-  #alarm { position: fixed; inset: 0; z-index: 50; display: none; flex-direction: column; justify-content: center; padding: 24px; background: #2a0507; }
+  #alarm { position: fixed; inset: 0; z-index: 50; display: none; flex-direction: column; justify-content: center; padding: 24px; background: #3A0F0C; }
   #alarm.show { display: flex; animation: flash 1s steps(2) infinite; }
-  @keyframes flash { 50% { background: #5a0a0e; } }
-  #alarm h2 { font-size: 30px; line-height: 1.15; margin: 0 0 10px; color: #fff; }
-  #alarm p { font-size: 16px; line-height: 1.5; color: #ffc9cb; margin: 0 0 28px; }
+  @keyframes flash { 50% { background: #6E1A14; } }
+  #alarm h2 { font-size: 34px; font-weight: 650; letter-spacing: -0.03em; line-height: 1.1; margin: 0 0 10px; color: #fff; }
+  #alarm p { font-size: 16px; line-height: 1.5; color: #FFD3CC; margin: 0 0 28px; }
   #alarm .btn { margin-bottom: 12px; font-size: 19px; padding: 20px; }
-  #alarm .btn.ok { background: #fff; color: #2a0507; }
+  #alarm .btn.ok { background: #FFF7EC; color: #3A0F0C; }
+  #alarm .btn.danger { background: var(--coral); color: #2A0806; }
   #alarm a.btn { display: block; text-align: center; text-decoration: none; }
 
-  /* ---------- Placeholder tabs ---------- */
-  .soon { display: inline-block; font-size: 11px; font-weight: 650; color: var(--amber); border: 1px solid rgba(240,180,90,0.4); border-radius: 999px; padding: 3px 9px; margin-bottom: 10px; }
-  .card p { font-size: 14px; line-height: 1.5; color: var(--dim); margin: 0 0 8px; }
+  .soon { display: inline-block; font-size: 12px; font-weight: 650; color: var(--amber); background: #F3E7D4; border-radius: 999px; padding: 4px 10px; margin-bottom: 10px; }
+  .card p { font-size: 14px; line-height: 1.55; color: var(--dim); margin: 0 0 8px; }
   .card p:last-child { margin-bottom: 0; }
-  .kv { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--edge); font-size: 14px; }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--edge); font-size: 14px; }
   .kv:first-of-type { border-top: none; }
   .kv span:first-child { color: var(--dim); }
+  .kv span:last-child { text-align: right; font-weight: 600; }
 
   /* ---------- Settings ---------- */
-  .field { margin-bottom: 16px; }
+  .field { margin-bottom: 18px; }
   .field:last-child { margin-bottom: 0; }
-  .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-  .field .help { font-size: 12px; color: var(--faint); margin-top: 6px; line-height: 1.45; }
-  .seg { display: flex; background: var(--bg); border: 1px solid var(--edge); border-radius: 12px; padding: 3px; }
-  .seg button { flex: 1; appearance: none; border: none; background: transparent; color: var(--dim); padding: 10px 6px; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .seg button.on { background: var(--edge); color: var(--ink); }
-  input[type=text], input[type=tel] { width: 100%; background: var(--bg); border: 1px solid var(--edge); color: var(--ink); border-radius: 12px; padding: 12px; font-size: 16px; font-family: inherit; }
-  input:focus-visible, button:focus-visible { outline: 2px solid var(--breath); outline-offset: 2px; }
-  .switch { display: flex; justify-content: space-between; align-items: center; }
-  .switch input { width: 46px; height: 26px; accent-color: var(--breath); }
-  .fine { font-size: 12px; color: var(--faint); line-height: 1.55; margin: 18px 4px 0; }
+  .field label { display: block; font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .field .help, .help { font-size: 13px; color: var(--faint); margin-top: 6px; line-height: 1.5; }
+  .seg { display: flex; flex-wrap: wrap; background: var(--bg); border-radius: 16px; padding: 4px; gap: 2px; }
+  .seg button { flex: 1; appearance: none; border: none; background: transparent; color: var(--dim); padding: 10px 8px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .2s, color .2s; }
+  .seg button.on { background: var(--panel); color: var(--deep); box-shadow: 0 1px 0 var(--edge), 0 2px 8px -4px rgba(23,80,77,.35); }
+  input[type=text], input[type=tel] { width: 100%; background: var(--bg); border: 1px solid var(--edge); color: var(--ink); border-radius: 14px; padding: 13px; font-size: 16px; font-family: inherit; }
+  input:focus-visible, button:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--breath); outline-offset: 2px; }
+  .switch { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .switch input { appearance: none; -webkit-appearance: none; margin: 0; width: 52px; height: 32px; flex: none; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .25s var(--ease); }
+  .switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #FFFBF5; box-shadow: 0 2px 6px -1px rgba(23,80,77,.35); transition: transform .3s var(--ease); }
+  .switch input:checked { background: var(--breath); }
+  .switch input:checked::after { transform: translateX(20px); }
+  .fine { font-size: 12px; color: var(--faint); line-height: 1.6; margin: 20px 4px 0; }
   .fine a { color: var(--dim); }
 
   /* ---------- Test panel ---------- */
-  .testpanel { display: none; border-color: rgba(240,180,90,0.4); }
+  .testpanel { display: none; border-color: var(--tan); }
   .testpanel.show { display: block; }
   .tgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .tgrid label { font-size: 11px; color: var(--dim); display: flex; flex-direction: column; gap: 4px; }
-  .tgrid select { background: var(--bg); color: var(--ink); border: 1px solid var(--edge); border-radius: 10px; padding: 10px; font-size: 15px; font-family: inherit; }
+  .tgrid label { font-size: 12px; color: var(--dim); display: flex; flex-direction: column; gap: 4px; }
+  .tgrid select { background: var(--bg); color: var(--ink); border: 1px solid var(--edge); border-radius: 12px; padding: 10px; font-size: 15px; font-family: inherit; }
   .tlive { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
-  .tlive .k { font-size: 11px; color: var(--dim); margin-bottom: 3px; }
+  .tlive .k { font-size: 12px; color: var(--dim); margin-bottom: 3px; }
   .tlive .v { font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
   .clar-strong { color: var(--breath); } .clar-ok { color: var(--amber); } .clar-weak { color: var(--alarm); }
   #tTable table { font-size: 12px; }
   #tTable .row { margin-top: 10px; }
 
   /* ---------- Reports & Trends ---------- */
-  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 4px; scrollbar-width: none; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
-  .chip { flex: none; appearance: none; border: 1px solid var(--edge); background: var(--panel); color: var(--dim); border-radius: 999px; padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
-  .tiles .k { font-size: 11px; color: var(--dim); margin-bottom: 3px; }
-  .tiles .v { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; }
-  .tiles .v small { font-size: 13px; color: var(--dim); font-weight: 500; }
-  .charttitle { font-size: 13px; font-weight: 600; color: var(--ink); margin: 2px 0 8px; }
+  .chip { flex: none; appearance: none; border: 1px solid var(--edge); background: var(--panel); color: var(--dim); border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s, color .2s; }
+  .chip.on { background: var(--deep); color: #FFF7EC; border-color: var(--deep); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .tiles > div { background: var(--bg); border-radius: 16px; padding: 12px; }
+  .tiles .k { font-size: 12px; color: var(--dim); margin-bottom: 4px; line-height: 1.3; }
+  .tiles .v { font-size: 30px; font-weight: 500; font-variation-settings: "opsz" 96; letter-spacing: -0.03em; color: var(--deep); font-variant-numeric: tabular-nums; }
+  .tiles .v small { font-size: 13px; color: var(--dim); font-weight: 500; letter-spacing: 0; }
+  .charttitle { font-size: 14px; font-weight: 650; color: var(--ink); margin: 2px 0 8px; }
   .chartwrap { position: relative; touch-action: pan-y; }
-  .tip { display: none; position: absolute; top: 2px; background: #1b2333; border: 1px solid var(--edge); color: var(--ink); font-size: 12px; line-height: 1.45; padding: 7px 9px; border-radius: 8px; pointer-events: none; white-space: nowrap; z-index: 5; }
+  .chartwrap canvas { clip-path: inset(0 0 0 0); transition: clip-path 1.1s var(--ease); }
+  .chartwrap.wipe canvas { clip-path: inset(0 100% 0 0); transition: none; }
+  .tip { display: none; position: absolute; top: 2px; background: var(--deep); color: #FFF7EC; font-size: 12px; line-height: 1.45; padding: 7px 10px; border-radius: 10px; pointer-events: none; white-space: nowrap; z-index: 5; }
   .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--dim); margin: 8px 0 10px; }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .lk { display: inline-block; }
-  .lk.line { width: 16px; height: 2px; background: #20a493; border-radius: 1px; }
-  .lk.pause, .tk.pause { width: 3px; height: 10px; background: #c9343f; border-radius: 1px; }
+  .lk.line { width: 16px; height: 2px; background: #2A7D76; border-radius: 1px; }
+  .lk.pause, .tk.pause { width: 3px; height: 10px; background: #D4574B; border-radius: 1px; }
   .tk { display: inline-block; margin-right: 5px; vertical-align: -1px; }
-  .lk.band { width: 16px; height: 10px; background: rgba(32,164,147,0.25); border-radius: 2px; }
-  .lk.flagline { width: 16px; height: 1px; background: #b98a2c; }
-  .trendstatus { display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 650; margin-bottom: 6px; }
+  .lk.band { width: 16px; height: 10px; background: rgba(42,125,118,0.18); border-radius: 2px; }
+  .lk.flagline { width: 16px; height: 1px; background: #8A6534; }
+  .trendstatus { display: inline-flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 650; letter-spacing: -0.01em; margin-bottom: 6px; }
   .trendstatus.ok { color: var(--breath); }
   .trendstatus.flag, .flagtxt { color: var(--amber); }
   .flagtxt { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
   .ico { width: 18px; height: 18px; flex: none; }
   .flagtxt .ico { width: 14px; height: 14px; }
   details { margin-top: 10px; font-size: 13px; color: var(--dim); }
-  details summary { cursor: pointer; padding: 6px 0; color: var(--ink); font-weight: 600; }
+  details summary { cursor: pointer; padding: 6px 0; color: var(--deep); font-weight: 600; }
   table { width: 100%; border-collapse: collapse; margin-top: 6px; font-variant-numeric: tabular-nums; }
-  th, td { text-align: left; padding: 6px 4px; border-top: 1px solid var(--edge); }
+  th, td { text-align: left; padding: 7px 4px; border-top: 1px solid var(--edge); }
   th { color: var(--faint); font-weight: 600; font-size: 12px; }
-  .sharebox { width: 100%; height: 160px; margin-top: 8px; background: var(--bg); color: var(--ink); border: 1px solid var(--edge); border-radius: 10px; padding: 10px; font: 13px/1.5 var(--sans); }
-  .kv span:last-child { text-align: right; }
+  .sharebox { width: 100%; height: 160px; margin-top: 8px; background: var(--bg); color: var(--ink); border: 1px solid var(--edge); border-radius: 14px; padding: 12px; font: 13px/1.5 var(--sans); }
 
   /* ---------- Tab bar ---------- */
-  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: rgba(10,13,20,0.94); border-top: 1px solid var(--edge); padding-bottom: env(safe-area-inset-bottom); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-  nav .in { max-width: 560px; margin: 0 auto; display: flex; height: var(--tabbar); }
-  nav button { flex: 1; appearance: none; border: none; background: none; color: var(--faint); font-size: 11px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
+  nav { position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 30; max-width: 536px; margin: 0 auto; background: rgba(255,251,245,0.86); border: 1px solid var(--edge); border-radius: 26px; backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); box-shadow: 0 12px 30px -16px rgba(23,80,77,.35); }
+  nav .in { display: flex; height: var(--tabbar); position: relative; }
+  nav button { flex: 1; appearance: none; border: none; background: none; color: var(--faint); font-size: 11px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; position: relative; z-index: 1; transition: color .25s; }
   nav button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  nav button.on { color: var(--breath); }
-  .simbanner { display: none; background: var(--amber); color: #2a1a00; font-size: 12px; font-weight: 700; text-align: center; padding: 6px; }
+  nav button.on { color: var(--deep); }
+  nav .pill { position: absolute; top: 7px; bottom: 7px; left: 0; width: 25%; padding: 0 6px; transition: transform .45s var(--ease); }
+  nav .pill::before { content: ""; display: block; height: 100%; border-radius: 20px; background: var(--wash); }
+  .simbanner { display: none; background: var(--tan); color: #2E200C; font-size: 12px; font-weight: 700; text-align: center; padding: 6px; }
   .simbanner.show { display: block; }
-  @media (prefers-reduced-motion: reduce) { #alarm.show { animation: none; background: #5a0a0e; } .progress > div, #nightDot { transition: none; } }
+
+  /* ---------- Count-up numbers ---------- */
+  .countup { display: inline-block; }
+
+  /* ---------- Intro: night-to-morning scroll story ---------- */
+  #intro { position: fixed; inset: 0; z-index: 60; background: var(--night); color: #F3E6D0; overflow: hidden; }
+  #intro.gone { display: none; }
+  #introGL { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #introScroll { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #introScroll::-webkit-scrollbar { display: none; }
+  .scene { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 24px calc(56px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
+  .scene.first { justify-content: flex-end; }
+  .scene h2 { font-size: clamp(34px, 10vw, 54px); font-weight: 500; font-variation-settings: "opsz" 96; letter-spacing: -0.04em; line-height: 0.98; margin: 0 0 14px; }
+  .scene p { font-size: 17px; line-height: 1.5; margin: 0; max-width: 26em; opacity: .82; }
+  .wordmark { font-size: clamp(88px, 30vw, 150px); font-weight: 300; font-variation-settings: "opsz" 96; letter-spacing: -0.07em; line-height: .8; margin: 0 0 18px; }
+  .scene .reveal { opacity: 0; transform: translateY(24px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
+  .scene.in .reveal { opacity: 1; transform: none; }
+  .scene.in .reveal:nth-child(2) { transition-delay: .12s; }
+  .scene.in .reveal:nth-child(3) { transition-delay: .24s; }
+  .scrollcue { margin-top: 28px; font-size: 13px; opacity: .6; display: flex; align-items: center; gap: 10px; }
+  .scrollcue i { width: 1px; height: 28px; background: currentColor; transform-origin: top; animation: cue 2.2s var(--ease) infinite; }
+  @keyframes cue { 0% { transform: scaleY(0); } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+  .introSkip { position: absolute; z-index: 2; top: calc(14px + env(safe-area-inset-top)); right: 16px; appearance: none; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; opacity: .75; cursor: pointer; }
+  .introBar { position: absolute; z-index: 2; left: 24px; right: 24px; top: calc(20px + env(safe-area-inset-top)); max-width: 120px; height: 2px; background: rgba(127,127,127,.3); border-radius: 1px; overflow: hidden; }
+  .introBar i { display: block; height: 100%; width: 100%; background: currentColor; transform-origin: left; transform: scaleX(0); }
+  .scene .btn { margin-top: 26px; background: var(--deep); }
+  .scene .fineprint { font-size: 12px; opacity: .6; margin-top: 14px; }
+
+  /* While Echo is listening, nothing animates: the audio work gets the phone to itself. */
+  body.listening *, body.listening *::before, body.listening *::after { animation: none !important; transition: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    #alarm.show { background: #6E1A14; }
+    .scene .reveal { opacity: 1; transform: none; }
+  }
 </style>
 </head>
 <body>
+<!-- ==================== INTRO (first open, and "How Echo works") ==================== -->
+<div id="intro" class="gone" aria-label="How Echo works">
+  <canvas id="introGL" aria-hidden="true"></canvas>
+  <div class="introBar" aria-hidden="true"><i id="introProg"></i></div>
+  <button class="introSkip" id="introSkip">Skip</button>
+  <div id="introScroll">
+    <section class="scene first" data-shape="0">
+      <div class="wordmark reveal">echo</div>
+      <p class="reveal">A breathing monitor that works with sound, for the people you worry about at night.</p>
+      <div class="scrollcue reveal"><i></i>Scroll to see how it works</div>
+    </section>
+    <section class="scene" data-shape="1">
+      <h2 class="reveal">Your phone plays a tone too high to hear.</h2>
+      <p class="reveal">Echo sends out a steady sound around 17 kHz and listens for it to bounce back. No camera, nothing to wear.</p>
+    </section>
+    <section class="scene" data-shape="2">
+      <h2 class="reveal">Every breath moves the echo.</h2>
+      <p class="reveal">As the chest rises and falls, the echo shifts by a fraction of a millimeter. Echo turns that shift into breaths.</p>
+    </section>
+    <section class="scene" data-shape="3">
+      <h2 class="reveal">It records only what it can see clearly.</h2>
+      <p class="reveal">If they roll away or a blanket blocks the sound, Echo stops recording instead of guessing. Pauses of 10 seconds or more are logged.</p>
+    </section>
+    <section class="scene" data-shape="4">
+      <h2 class="reveal">In the morning, a report for the family.</h2>
+      <p class="reveal">Breathing rate, pauses, and how last night compares with their normal, ready to share with family or a doctor.</p>
+      <div class="reveal"><button class="btn" id="introGo">Set up tonight</button>
+      <p class="fineprint">A student project, not a medical device.</p></div>
+    </section>
+  </div>
+</div>
 <div class="simbanner" id="simBanner">SIMULATION: fake breathing, no microphone</div>
 
 <div class="page">
@@ -185,6 +278,7 @@
   <section class="view active" id="view-tonight">
 
     <div id="tIdle">
+      <div class="hero" aria-hidden="true"><span class="ring"></span><span class="ring"></span><span class="ring"></span><span class="orb"></span></div>
       <h1>Tonight</h1>
       <p class="sub">Echo records breathing overnight with sound you can't hear, for a morning report. No camera, nothing to wear, and nothing to sign up for.</p>
       <div class="card">
@@ -197,6 +291,7 @@
       </div>
       <button class="btn" id="startBtn">Start tonight</button>
       <p class="hint" id="idleMsg"></p>
+      <p style="text-align:center;margin:14px 0 0"><button class="linkbtn" id="howBtn">How Echo works</button></p>
     </div>
 
     <div id="tCalib" style="display:none">
@@ -340,6 +435,7 @@
 
 <nav>
   <div class="in">
+    <span class="pill" id="navPill"></span>
     <button class="on" data-tab="tonight"><svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>Tonight</button>
     <button data-tab="trends"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Trends</button>
     <button data-tab="reports"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Reports</button>
@@ -377,11 +473,40 @@
   document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
     document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + b.dataset.tab));
-    if (b.dataset.tab === 'reports') renderReports();
-    if (b.dataset.tab === 'trends') renderTrends();
+    movePill(b);
+    if (b.dataset.tab === 'reports') { renderReports(); animateIn($('reportsBody')); }
+    if (b.dataset.tab === 'trends') { renderTrends(); animateIn($('trendsBody')); }
     if (b.dataset.tab === 'tonight' && running) sizeWave();
     noteActivity();
   }));
+
+  function movePill(b) {
+    const btns = [...document.querySelectorAll('nav button')];
+    $('navPill').style.transform = 'translateX(' + (btns.indexOf(b) * 100) + '%)';
+  }
+
+  // Charts wipe in left to right and big numbers count up when a tab opens.
+  // Skipped while Echo is listening (body.listening) so the audio isn't disturbed.
+  function animateIn(root) {
+    const quiet = document.body.classList.contains('listening') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const wraps = root.querySelectorAll('.chartwrap');
+    if (quiet) return;
+    wraps.forEach(w => w.classList.add('wipe'));
+    requestAnimationFrame(() => requestAnimationFrame(() => wraps.forEach(w => w.classList.remove('wipe'))));
+    root.querySelectorAll('.tiles .v').forEach(el => {
+      const t = el.firstChild;
+      if (!t || t.nodeType !== 3) return;
+      const m = t.nodeValue.match(/^(\D*)(\d+(?:\.\d+)?)(.*)$/s);
+      if (!m) return;
+      const end = parseFloat(m[2]), dec = (m[2].split('.')[1] || '').length, t0 = performance.now(), dur = 900;
+      const step = now => {
+        const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        t.nodeValue = m[1] + (end * e).toFixed(dec) + m[3];
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
 
   // ---------------------------------------------------------------------------
   // Engine state
@@ -734,7 +859,7 @@
       const x = ((k + off) / (WAVE_N - 1)) * w, y = h - ((sm[k] - mn) / rng) * (h - 20) - 10;
       k ? waveCtx.lineTo(x, y) : waveCtx.moveTo(x, y);
     }
-    waveCtx.strokeStyle = alarmOn ? '#ff5a5f' : '#5fd4c4'; waveCtx.lineWidth = 2.5; waveCtx.lineJoin = 'round'; waveCtx.stroke();
+    waveCtx.strokeStyle = alarmOn ? '#D4574B' : '#2A7D76'; waveCtx.lineWidth = 2.5; waveCtx.lineJoin = 'round'; waveCtx.stroke();
     if ($('night').classList.contains('show')) {
       const dot = $('nightDot');
       dot.style.opacity = (0.15 + 0.45 * lastNorm).toFixed(2);
@@ -991,6 +1116,7 @@
   // ---------------------------------------------------------------------------
   function show(part) {
     ['tIdle', 'tCalib', 'tWatch'].forEach(id => $(id).style.display = id === part ? 'block' : 'none');
+    document.body.classList.toggle('listening', part !== 'tIdle');
   }
 
   async function start() {
@@ -1082,7 +1208,7 @@
   // ===========================================================================
   // Saved nights, Morning Report, Trends / Early Warning
   // ===========================================================================
-  const C = { line: '#20a493', flag: '#b98a2c', pause: '#c9343f', grid: '#1f2738', text: '#8a93a6', ink: '#e9edf5', surface: '#121826' };
+  const C = { line: '#2A7D76', flag: '#8A6534', pause: '#D4574B', grid: '#EDE4D6', text: '#6E7A77', ink: '#23312F', surface: '#FFFBF5' };
   const MIN_NIGHT_MIN = 30;     // shorter sessions are kept but not used for Trends
   const FLAG_ABOVE = 3;         // breaths/min above normal that counts as "above normal"
   let selectedSessionId = null;
@@ -1165,13 +1291,13 @@
         return [p[0], sum / n];
       });
       const pts = series.filter(p => p[1] != null);
-      if (!pts.length) { cx.fillStyle = C.text; cx.font = '13px system-ui'; cx.fillText('No breathing rate recorded in this session.', padL, h / 2); return; }
+      if (!pts.length) { cx.fillStyle = C.text; cx.font = '13px "Bricolage Grotesque", system-ui'; cx.fillText('No breathing rate recorded in this session.', padL, h / 2); return; }
       let lo = Math.min(...pts.map(p => p[1])), hi = Math.max(...pts.map(p => p[1]));
       lo = Math.max(0, Math.floor(lo - 2)); hi = Math.ceil(hi + 2);
       const X = sec => padL + (sec / dur) * (w - padL - padR);
       const Y = v => padT + plotH - ((v - lo) / (hi - lo)) * plotH;
       // grid + y ticks
-      cx.font = '11px system-ui'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
+      cx.font = '11px "Bricolage Grotesque", system-ui'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
       for (const t of niceTicks(lo, hi, 4)) {
         cx.strokeStyle = C.grid; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(padL, Math.round(Y(t)) + 0.5); cx.lineTo(w - padR, Math.round(Y(t)) + 0.5); cx.stroke();
         cx.fillStyle = C.text; cx.fillText(t, padL - 6, Y(t));
@@ -1212,7 +1338,7 @@
       cx.stroke();
       // hover crosshair
       if (cvs._hoverX != null) {
-        cx.strokeStyle = 'rgba(233,237,245,0.35)'; cx.lineWidth = 1;
+        cx.strokeStyle = 'rgba(35,49,47,0.28)'; cx.lineWidth = 1;
         cx.beginPath(); cx.moveTo(Math.round(cvs._hoverX) + 0.5, padT); cx.lineTo(Math.round(cvs._hoverX) + 0.5, padT + plotH); cx.stroke();
       }
       cvs._geom = { X, dur, padL, padR }; cvs._series = series;
@@ -1244,7 +1370,7 @@
       const step = rows.length > 1 ? (w - padL - padR) / (rows.length - 1) : 0;
       const X = i => rows.length > 1 ? padL + i * step : (padL + w - padR) / 2;
       const Y = v => padT + plotH - ((v - lo) / (hi - lo)) * plotH;
-      cx.font = '11px system-ui'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
+      cx.font = '11px "Bricolage Grotesque", system-ui'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
       for (const t of niceTicks(lo, hi, 4)) {
         cx.strokeStyle = C.grid; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(padL, Math.round(Y(t)) + 0.5); cx.lineTo(w - padR, Math.round(Y(t)) + 0.5); cx.stroke();
         cx.fillStyle = C.text; cx.fillText(t, padL - 6, Y(t));
@@ -1252,7 +1378,7 @@
       // normal band (baseline to baseline + flag) as a light wash, flag line as a hairline
       const withBase = rows.map((r, i) => [i, r.base]).filter(p => p[1] != null);
       if (withBase.length > 1) {
-        cx.fillStyle = 'rgba(32,164,147,0.10)'; cx.beginPath();
+        cx.fillStyle = 'rgba(42,125,118,0.12)'; cx.beginPath();
         withBase.forEach(([i, b], k) => k ? cx.lineTo(X(i), Y(b - 1.5)) : cx.moveTo(X(i), Y(b - 1.5)));
         withBase.slice().reverse().forEach(([i, b]) => cx.lineTo(X(i), Y(b + 1.5)));
         cx.closePath(); cx.fill();
@@ -1273,7 +1399,7 @@
       cx.textAlign = 'left'; cx.fillText(fmtDay(rows[0].n.start), padL, padT + plotH + 8);
       if (rows.length > 1) { cx.textAlign = 'right'; cx.fillText(fmtDay(rows[rows.length - 1].n.start), w - padR, padT + plotH + 8); }
       if (cvs._hoverX != null) {
-        cx.strokeStyle = 'rgba(233,237,245,0.35)'; cx.lineWidth = 1;
+        cx.strokeStyle = 'rgba(35,49,47,0.28)'; cx.lineWidth = 1;
         cx.beginPath(); cx.moveTo(Math.round(cvs._hoverX) + 0.5, padT); cx.lineTo(Math.round(cvs._hoverX) + 0.5, padT + plotH); cx.stroke();
       }
       cvs._geom = { X, step, padL };
@@ -1300,7 +1426,7 @@
       const hi = niceTicks(0, maxV, 2).slice(-1)[0] < maxV ? maxV : niceTicks(0, maxV, 2).slice(-1)[0];
       const slot = (w - padL - padR) / nights.length, bw = Math.min(24, slot - 2);
       const Y = v => padT + plotH - (v / hi) * plotH;
-      cx.font = '11px system-ui'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
+      cx.font = '11px "Bricolage Grotesque", system-ui'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
       for (const t of niceTicks(0, hi, 2)) {
         cx.strokeStyle = C.grid; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(padL, Math.round(Y(t)) + 0.5); cx.lineTo(w - padR, Math.round(Y(t)) + 0.5); cx.stroke();
         cx.fillStyle = C.text; cx.fillText(t, padL - 6, Y(t));
@@ -1312,7 +1438,7 @@
         roundRectTop(cx, x, y, bw, padT + plotH - y, 4);
       });
       if (cvs._hoverX != null) {
-        cx.strokeStyle = 'rgba(233,237,245,0.35)'; cx.lineWidth = 1;
+        cx.strokeStyle = 'rgba(35,49,47,0.28)'; cx.lineWidth = 1;
         cx.beginPath(); cx.moveTo(Math.round(cvs._hoverX) + 0.5, padT); cx.lineTo(Math.round(cvs._hoverX) + 0.5, padT + plotH); cx.stroke();
       }
       cvs._geom = { slot, padL };
@@ -1349,7 +1475,7 @@
         '<h2>' + esc(fmtDay(s.start)) + ' · ' + esc(fmtTime(s.start)) + ' to ' + esc(fmtTime(s.start + s.durSec * 1000)) + (s.sample ? ' · sample data' : s.sim ? ' · simulation' : '') + '</h2>' +
         '<div class="tiles">' +
           '<div><div class="k">Average breathing</div><div class="v">' + (s.avgRate ?? '—') + '<small>' + (s.avgRate ? ' /min' : '') + '</small></div></div>' +
-          '<div><div class="k">Pauses ≥ 10 s</div><div class="v">' + s.pauseCount + '</div></div>' +
+          '<div><div class="k">Pauses ≥&nbsp;10&nbsp;s</div><div class="v">' + s.pauseCount + '</div></div>' +
           '<div><div class="k">Breathing seen</div><div class="v">' + Math.round(100 * s.coverage) + '<small>%</small></div></div>' +
         '</div>' +
         '<div class="charttitle">Breathing rate through the night</div>' +
@@ -1367,7 +1493,7 @@
       '</div>' +
       '<button class="btn" id="shareBtn">Share summary</button>' +
       '<p class="hint" id="shareMsg"></p>';
-    root.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { selectedSessionId = +b.dataset.id; renderReports(); }));
+    root.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { selectedSessionId = +b.dataset.id; renderReports(); animateIn(root); }));
     $('shareBtn').addEventListener('click', () => shareSummary(s, cmp, longest));
     drawNightChart($('nightChart'), $('nightTip'), s);
   }
@@ -1627,6 +1753,247 @@
 
   // test hook so automated checks can read state (harmless in normal use)
   window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null }; } };
+
+  // ---------------------------------------------------------------------------
+  // Intro: a particle story that scrolls from night to morning.
+  // Particle-morph technique adapted from the author's own site (ScrollScene).
+  // Runs only on the intro screen; WebGL is fully torn down before Echo listens.
+  // ---------------------------------------------------------------------------
+  const Intro = (() => {
+    const el = $('intro'), sc = $('introScroll'), cvs = $('introGL');
+    let THREEp = null, gl = null, raf2 = 0, obs = null;
+    const NIGHT = [15, 38, 36], DUSK = [38, 66, 62], MORN = [245, 239, 228];
+
+    function loadThree() {
+      if (window.THREE) return Promise.resolve(window.THREE);
+      if (THREEp) return THREEp;
+      THREEp = new Promise((res, rej) => {
+        const t = document.createElement('script');
+        t.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+        t.onload = () => res(window.THREE); t.onerror = rej;
+        document.head.appendChild(t);
+      });
+      return THREEp;
+    }
+
+    // ---- shapes (x right, y up; roughly within x ±1.7, y ±1.1) ----
+    const R = Math.random;
+    function orb(n, o) {
+      const g = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < n; i++) {
+        const y = 1 - (i / (n - 1)) * 2, r = Math.sqrt(1 - y * y), th = g * i;
+        const k = i % 7 === 0 ? 0.55 + R() * 0.4 : 1;   // a few inside for depth
+        o.set([Math.cos(th) * r * 1.05 * k, y * 1.05 * k, Math.sin(th) * r * 1.05 * k], i * 3);
+      }
+    }
+    function roundRect(cx, cy, w, h, rad) {   // random point on a rounded-rectangle outline
+      const straightW = w - 2 * rad, straightH = h - 2 * rad, arc = Math.PI * rad / 2;
+      const per = 2 * straightW + 2 * straightH + 4 * arc;
+      let u = R() * per;
+      const segs = [[straightW, t => [cx - w / 2 + rad + t, cy + h / 2]], [arc, t => cor(cx + w / 2 - rad, cy + h / 2 - rad, Math.PI / 2 - t / rad)],
+        [straightH, t => [cx + w / 2, cy + h / 2 - rad - t]], [arc, t => cor(cx + w / 2 - rad, cy - h / 2 + rad, -t / rad)],
+        [straightW, t => [cx + w / 2 - rad - t, cy - h / 2]], [arc, t => cor(cx - w / 2 + rad, cy - h / 2 + rad, -Math.PI / 2 - t / rad)],
+        [straightH, t => [cx - w / 2, cy - h / 2 + rad + t]], [arc, t => cor(cx - w / 2 + rad, cy + h / 2 - rad, Math.PI - t / rad)]];
+      function cor(x, y, a) { return [x + Math.cos(a) * rad, y + Math.sin(a) * rad]; }
+      for (const [len, f] of segs) { if (u <= len) return f(u); u -= len; }
+      return [cx, cy];
+    }
+    function phoneRings(n, o) {
+      for (let i = 0; i < n; i++) {
+        let x, y, z = (R() - 0.5) * 0.06;
+        if (i % 4 === 0) [x, y] = roundRect(-1.25, 0, 0.62, 1.2, 0.12);
+        else if (i % 23 === 0) { x = -1.25 + (R() - 0.5) * 0.12; y = -0.48; }
+        else {
+          const ring = i % 3, rr = 0.75 + ring * 0.42 + (R() - 0.5) * 0.03, a = (R() - 0.5) * 1.6;
+          x = -1.25 + Math.cos(a) * rr; y = Math.sin(a) * rr; z += (R() - 0.5) * 0.05;
+        }
+        o.set([x, y, z], i * 3);
+      }
+    }
+    // a person lying on their side, facing the phone on the left; aW marks the chest
+    function sleeper(n, o, w) {
+      // top contour of a body lying on its side (x from shoulder to feet)
+      const top = x => {
+        if (x < -0.45) return 0.34;
+        const t = (x + 0.45) / 2.05;
+        return 0.06 + 0.3 * Math.exp(-((t - 0.12) ** 2) / 0.02) + 0.22 * Math.exp(-((t - 0.5) ** 2) / 0.025) + 0.1 * (1 - t);
+      };
+      for (let i = 0; i < n; i++) {
+        let x, y, z = (R() - 0.5) * 0.12, wt = 0;
+        const r = R();
+        if (r < 0.12) { const a = R() * Math.PI * 2, rr = 0.24 * (R() < 0.8 ? 1 : Math.sqrt(R())); x = -0.62 + Math.cos(a) * rr; y = 0.24 + Math.sin(a) * rr; }  // head
+        else if (r < 0.2) { x = -0.95 + R() * 0.62; y = -0.06 + R() * 0.08; }                                                       // pillow
+        else if (r < 0.52) { x = -0.42 + R() * 2.0; y = top(x); }                                                                  // body outline
+        else if (r < 0.62) { x = -0.42 + R() * 2.0; y = -0.12 + R() * (top(x) + 0.12); z *= 2; }                                   // body fill
+        else if (r < 0.72) { x = -1.65 + R() * 3.4; y = -0.13 + (R() - 0.5) * 0.02; }                                               // mattress
+        else if (r < 0.78) [x, y] = roundRect(-1.5, 0.06, 0.16, 0.36, 0.04);                                                       // phone
+        else { const ring = i % 3, rr = 0.2 + ring * 0.17, a = (R() - 0.5) * 1.0; x = -1.5 + Math.cos(a) * rr; y = 0.12 + Math.sin(a) * rr; } // sound toward the chest
+        if (x > -0.45 && x < 0.3 && y > -0.12) wt = 1 - Math.abs(x + 0.1) / 0.4;
+        o.set([x, y, z], i * 3); w[i] = Math.max(0, wt);
+      }
+    }
+    // breathing line drawn in the shader; here just a flat ribbon
+    function ribbon(n, o) { for (let i = 0; i < n; i++) o.set([-1.7 + R() * 3.4, (R() - 0.5) * 0.05, (R() - 0.5) * 0.1], i * 3); }
+    // the morning report: axis, a gentle rate line, and two pause marks
+    function report(n, o) {
+      for (let i = 0; i < n; i++) {
+        let x, y, z = (R() - 0.5) * 0.04; const r = R();
+        if (r < 0.12) { x = -1.5 + R() * 3; y = -0.7; }
+        else if (r < 0.2) { x = -1.5; y = -0.7 + R() * 1.5; }
+        else if (r < 0.28) { const k = Math.floor(R() * 3); x = -1.5 + R() * 3; y = -0.2 + k * 0.4; z -= 0.2; if (R() < 0.6) { x = -1.5 + Math.round((x + 1.5) / 0.06) * 0.06; } }
+        else if (r < 0.36) { const k = R() < 0.5 ? -0.35 : 0.65; x = k + (R() - 0.5) * 0.03; y = -0.7 + R() * 0.5; }
+        else { x = -1.5 + R() * 3; y = 0.1 + 0.18 * Math.sin(x * 1.7) + 0.08 * Math.sin(x * 4.1 + 1) + (R() - 0.5) * 0.03; }
+        o.set([x, y, z], i * 3);
+      }
+    }
+
+    const VS = `
+      attribute vec3 aP0; attribute vec3 aP1; attribute vec3 aP2; attribute vec3 aP3; attribute vec3 aP4;
+      attribute vec3 aRand; attribute float aW;
+      uniform float uProgress, uTime, uVelocity, uPixelRatio, uSize;
+      varying float vAcc; varying float vAlpha;
+      float pauseZone(float x) { return smoothstep(-0.55, -0.15, x) * (1.0 - smoothstep(0.4, 0.8, x)); }
+      float pauseBar(vec3 p) { return step(p.y, -0.21) * (step(abs(p.x + 0.35), 0.03) + step(abs(p.x - 0.65), 0.03)); }
+      vec3 shape(float i) {
+        vec3 p = i < 0.5 ? aP0 : i < 1.5 ? aP1 : i < 2.5 ? aP2 : i < 3.5 ? aP3 : aP4;
+        if (i > 0.5 && i < 1.5) { // rings pulse outward from the phone
+          float d = length(p.xy - vec2(-1.25, 0.0));
+          if (d > 0.6) p.xy += normalize(p.xy - vec2(-1.25, 0.0)) * 0.06 * sin(uTime * 2.0 - d * 6.0);
+        }
+        if (i > 1.5 && i < 2.5) p.y += aW * 0.06 * sin(uTime * 1.3);         // chest rises and falls
+        if (i > 2.5 && i < 3.5) {                                               // breathing wave with one pause
+          float amp = 0.42 * (1.0 - pauseZone(p.x));
+          p.y += amp * sin(p.x * 5.0 - uTime * 1.4);
+        }
+        return p;
+      }
+      void main() {
+        float pr = clamp(uProgress, 0.0, 3.9999);
+        float seg = floor(pr), t = pr - seg;
+        float delay = aRand.x * 0.4;
+        float lt = smoothstep(delay, delay + 0.6, t);
+        vec3 pos = mix(shape(seg), shape(seg + 1.0), lt);
+        float transit = sin(lt * 3.14159);
+        vec3 dir = normalize(aRand - 0.5 + 0.0001);
+        pos += dir * transit * (0.45 + aRand.y * 0.5);
+        pos += vec3(sin(uTime * 0.6 + aRand.x * 40.0), cos(uTime * 0.5 + aRand.y * 40.0), sin(uTime * 0.4 + aRand.z * 40.0)) * (0.01 + transit * 0.04);
+        pos += dir * uVelocity * (0.2 + aRand.z * 0.8);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        gl_PointSize = uSize * uPixelRatio * (0.55 + aRand.y * 0.9) * (1.0 + transit * 0.5);
+        float w3 = seg > 2.5 && seg < 3.5 ? 1.0 - lt : (seg > 1.5 && seg < 2.5 ? lt : 0.0);
+        float w4 = seg > 2.5 ? lt : 0.0;
+        vAcc = max(max(step(0.93, aRand.z), w3 * pauseZone(aP3.x)), w4 * pauseBar(aP4));
+        vAlpha = 0.45 + aRand.x * 0.55;
+      }`;
+    const FS = `
+      precision mediump float;
+      uniform vec3 uColor, uAccent; uniform float uOpacity;
+      varying float vAcc; varying float vAlpha;
+      void main() {
+        vec2 c = gl_PointCoord - 0.5; float d = length(c);
+        if (d > 0.5) discard;
+        gl_FragColor = vec4(mix(uColor, uAccent, vAcc), smoothstep(0.5, 0.1, d) * vAlpha * uOpacity);
+      }`;
+
+    function mixc(a, b, k) { return a.map((v, i) => Math.round(v + (b[i] - v) * k)); }
+    function bgAt(p) {
+      if (p <= 2) return NIGHT;
+      if (p <= 3) return mixc(NIGHT, DUSK, p - 2);
+      return mixc(DUSK, MORN, Math.min(1, (p - 3) * 1.4));
+    }
+    function progress() {
+      const secs = sc.querySelectorAll('.scene'), mid = sc.scrollTop + sc.clientHeight * 0.5;
+      const c = [...secs].map(s => s.offsetTop + s.offsetHeight * 0.5);
+      if (mid <= c[0]) return 0;
+      for (let i = 1; i < c.length; i++) if (mid < c[i]) return i - 1 + (mid - c[i - 1]) / (c[i] - c[i - 1]);
+      return c.length - 1;
+    }
+
+    function build(THREE) {
+      let renderer;
+      try { renderer = new THREE.WebGLRenderer({ canvas: cvs, antialias: false, alpha: true }); } catch (e) { return null; }
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      renderer.setPixelRatio(dpr);
+      const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(35, 1, 0.1, 80), group = new THREE.Group();
+      const n = innerWidth < 768 ? 4500 : 9000, geo = new THREE.BufferGeometry();
+      const makers = [orb, phoneRings, null, ribbon, report], wArr = new Float32Array(n);
+      for (let s = 0; s < 5; s++) {
+        const a = new Float32Array(n * 3);
+        s === 2 ? sleeper(n, a, wArr) : makers[s](n, a);
+        geo.setAttribute('aP' + s, new THREE.BufferAttribute(a, 3));
+      }
+      geo.setAttribute('position', geo.getAttribute('aP0'));
+      geo.setAttribute('aW', new THREE.BufferAttribute(wArr, 1));
+      const rnd = new Float32Array(n * 3); for (let i = 0; i < rnd.length; i++) rnd[i] = R();
+      geo.setAttribute('aRand', new THREE.BufferAttribute(rnd, 3));
+      geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
+      const U = { uProgress: { value: 0 }, uTime: { value: 0 }, uVelocity: { value: 0 }, uPixelRatio: { value: dpr }, uSize: { value: 3.2 },
+        uOpacity: { value: 0 }, uColor: { value: new THREE.Color('#F3E6D0') }, uAccent: { value: new THREE.Color('#E8776B') } };
+      const mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, uniforms: U, transparent: true, depthWrite: false });
+      group.add(new THREE.Points(geo, mat)); scene.add(group);
+      const cream = new THREE.Color('#F3E6D0'), teal = new THREE.Color('#17504D');
+      function fit() {
+        const w = cvs.clientWidth, h = cvs.clientHeight, asp = w / h;
+        renderer.setSize(w, h, false); camera.aspect = asp; camera.updateProjectionMatrix();
+        const d = Math.max(6.2, 3.9 / (0.63 * asp)); camera.position.set(0, 0, d);
+        group.position.y = 0.63 * d * 0.17;   // sit in the upper part; text lives at the bottom
+      }
+      fit(); addEventListener('resize', fit);
+      const tilt = { x: 0, y: 0, tx: 0, ty: 0 };
+      const onMove = e => { const p = e.touches ? e.touches[0] : e; tilt.tx = (p.clientX / innerWidth - 0.5); tilt.ty = (p.clientY / innerHeight - 0.5); };
+      addEventListener('pointermove', onMove, { passive: true });
+      let prog = 0, lastTop = sc.scrollTop, vel = 0, last = performance.now();
+      function frame(now) {
+        const dt = Math.min(0.05, (now - last) / 1000); last = now;
+        const target = progress();
+        prog += (target - prog) * Math.min(1, dt * 5);
+        vel += ((Math.abs(sc.scrollTop - lastTop) / Math.max(1, sc.clientHeight)) * 6 - vel) * Math.min(1, dt * 6); lastTop = sc.scrollTop;
+        U.uProgress.value = prog; U.uTime.value = now / 1000; U.uVelocity.value = Math.min(0.6, vel);
+        U.uOpacity.value = Math.min(1, U.uOpacity.value + dt * 0.8);
+        const morning = Math.max(0, Math.min(1, (prog - 3) * 1.4));
+        U.uColor.value.copy(cream).lerp(teal, morning);
+        tilt.x += (tilt.tx - tilt.x) * 0.05; tilt.y += (tilt.ty - tilt.y) * 0.05;
+        group.rotation.y = tilt.x * 0.5 + Math.sin(now / 4000) * 0.12 * (prog < 1 ? 1 : 0.3);
+        group.rotation.x = tilt.y * 0.3;
+        renderer.render(scene, camera);
+        paint(prog);
+        raf2 = requestAnimationFrame(frame);
+      }
+      raf2 = requestAnimationFrame(frame);
+      return { dispose() { cancelAnimationFrame(raf2); removeEventListener('resize', fit); removeEventListener('pointermove', onMove);
+        geo.dispose(); mat.dispose(); renderer.dispose(); try { renderer.forceContextLoss(); } catch (e) {} } };
+    }
+
+    function paint(p) {
+      const bg = bgAt(p);
+      el.style.background = 'rgb(' + bg.join(',') + ')';
+      el.style.color = p > 3.45 ? '#17504D' : '#F3E6D0';
+      $('introProg').style.transform = 'scaleX(' + (p / 4).toFixed(3) + ')';
+    }
+
+    let fallbackLoop = 0;
+    function open() {
+      el.classList.remove('gone'); sc.scrollTop = 0; document.body.style.overflow = 'hidden';
+      obs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }), { root: sc, threshold: 0.3 });
+      sc.querySelectorAll('.scene').forEach(s => { s.classList.remove('in'); obs.observe(s); });
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const fallback = () => { const f = () => { paint(progress()); fallbackLoop = requestAnimationFrame(f); }; f(); };
+      if (reduce) return fallback();
+      loadThree().then(T => { if (el.classList.contains('gone')) return; gl = build(T); if (!gl) fallback(); }).catch(fallback);
+    }
+    function close() {
+      if (gl) { gl.dispose(); gl = null; }
+      cancelAnimationFrame(fallbackLoop);
+      if (obs) { obs.disconnect(); obs = null; }
+      el.classList.add('gone'); document.body.style.overflow = '';
+      store.set('introSeen', true);
+    }
+    $('introSkip').addEventListener('click', close);
+    $('introGo').addEventListener('click', close);
+    $('howBtn').addEventListener('click', () => { if (!running) open(); });
+    return { open, close };
+  })();
+  if (params.get('intro') || (!store.get('introSeen', false) && !params.get('sim') && !navigator.webdriver)) Intro.open();
 })();
 </script>
 </body>
