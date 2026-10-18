@@ -53,7 +53,21 @@ Every session is saved on the phone only (browser storage). Each saved night kee
 
 Trends uses nights of 30 minutes or more. A night's "normal" is the median of the nightly averages from up to 14 earlier nights (at least 3 needed). A night is flagged when its average is 3 or more breaths/min above normal. The Trends tab can load 14 labeled sample nights for demos.
 
-## Pause alarm
+## Data-only by default
+
+Real-person testing (Oct 17) showed sonar reflects off the body like a mirror at this wavelength (about 2 cm), so the phone must face the chest directly. It works well for side sleepers with the phone at mattress height facing the chest, poorly when the phone is beside someone lying on their back, and poorly through a blanket hanging in front of a side sleeper.
+
+So Echo records data for a morning report instead of acting as an alarm:
+
+- **Seeing:** breaths are found and stand out clearly (spectral clarity 6+ or breath-to-jitter ratio 12+). Breathing rate is recorded.
+- **Pause:** breaths stop with no big movement just before. Logged as a pause.
+- **Lost:** breaths stop right after a big movement (rolling over), or the signal is unclear. Nothing is recorded and nothing is guessed.
+
+Each night reports how much of it Echo could see. Nights where breathing was seen less than half the time are left out of Trends. Alerts are an optional, experimental setting.
+
+In simulation (5+ minutes each): steady 97% seen, irregular 92%, stops logged correctly (3 of 3), rolling over gave 0 false pauses and 0 false alarms.
+
+## Pause alarm (optional, experimental)
 
 Echo arms itself once it has seen steady breathing (6 or more breaths in the last minute). While armed, it sounds an alarm if no breath is detected for the set time (15, 20 or 30 s, default 20). In simulation, steady, irregular and waxing-and-waning breathing ran 5 minutes each with no alarms, and breathing that stopped at 70, 190 and 310 s set off alarms at 93, 212 and 331 s.
 

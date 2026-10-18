@@ -66,7 +66,7 @@
   .big .unit { color: var(--dim); font-size: 15px; line-height: 1.3; }
   canvas { display: block; width: 100%; }
   #wave { height: 120px; border-radius: 12px; background: #070a10; margin: 12px 0 4px; }
-  .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 10px; margin-top: 12px; }
   .meta .k { font-size: 11px; color: var(--dim); margin-bottom: 3px; }
   .meta .v { font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; }
   .bars { display: inline-flex; gap: 3px; align-items: flex-end; height: 16px; }
@@ -186,13 +186,13 @@
 
     <div id="tIdle">
       <h1>Tonight</h1>
-      <p class="sub">Echo listens for breathing with sound you can't hear. No camera and nothing to wear.</p>
+      <p class="sub">Echo records breathing overnight with sound you can't hear, for a morning report. No camera, nothing to wear, and nothing to sign up for.</p>
       <div class="card">
         <ol class="steps">
           <li><div><b>Plug in the phone.</b> Echo keeps the screen on all night.</div></li>
-          <li><div><b>Put it higher than the bed, looking down at the chest,</b> about 30–50 cm away: on a nightstand or a stack of books, tilted down, with the bottom edge aimed at the chest. Sonar only sees movement toward or away from the phone, and a sleeping chest rises upward, so the phone has to look down at it.</div></li>
+          <li><div><b>Works best for side sleepers.</b> Put the phone on the nightstand at mattress height, about 30–50 cm away, with the bottom edge facing the person's chest. Sonar reflects off the body like a mirror, so the phone has to face the chest straight on.</div></li>
           <li><div><b>Turn the phone's volume up</b> and take out any earbuds.</div></li>
-          <li><div><b>Tap Start.</b> Echo tunes itself in a few seconds, then watches quietly.</div></li>
+          <li><div><b>Tap Start.</b> Echo tunes itself, then records only while it can clearly see breathing. If the person rolls away or a thick blanket blocks it, Echo pauses recording instead of guessing.</div></li>
         </ol>
       </div>
       <button class="btn" id="startBtn">Start tonight</button>
@@ -216,8 +216,9 @@
       <div class="card" style="margin-top:12px">
         <div class="meta" style="margin-top:0">
           <div><div class="k">Signal</div><div class="v"><span class="bars" id="bars"><i></i><i></i><i></i><i></i></span></div></div>
+          <div><div class="k">Breathing seen</div><div class="v" id="seenV">—</div></div>
+          <div><div class="k">Pauses logged</div><div class="v" id="pausesV">0</div></div>
           <div><div class="k">Pattern</div><div class="v" id="patternV">—</div></div>
-          <div><div class="k">Pauses tonight</div><div class="v" id="pausesV">0</div></div>
         </div>
       </div>
       <div class="card testpanel" id="testPanel">
@@ -265,6 +266,12 @@
     <h1>Settings</h1>
     <p class="sub">Saved on this phone only.</p>
     <div class="card">
+      <h2>Alerts (experimental)</h2>
+      <div class="field switch">
+        <label for="alertSw" style="margin:0">Sound an alarm if breathing seems to stop</label>
+        <input type="checkbox" id="alertSw">
+      </div>
+      <div class="help" style="margin:-8px 0 14px">Off by default. Echo is built to record data for a morning report. Alerts are experimental: rolling over or a thick blanket can cause false alarms, and real events can be missed.</div>
       <div class="field">
         <label>Alarm after no breathing for</label>
         <div class="seg" id="pauseSeg">
@@ -285,7 +292,7 @@
       </div>
       <div class="field">
         <label>Demo mode (fake breathing, no microphone)</label>
-        <div class="seg" id="demoSeg"><button data-v="off">Off</button><button data-v="steady">Steady</button><button data-v="pause">Pauses</button><button data-v="wax">Wax–wane</button></div>
+        <div class="seg" id="demoSeg"><button data-v="off">Off</button><button data-v="steady">Steady</button><button data-v="pause">Pauses</button><button data-v="wax">Wax–wane</button><button data-v="roll">Rolls over</button></div>
         <div class="seg" id="speedSeg" style="margin-top:8px"><button data-v="1">Real speed</button><button data-v="10">10× faster</button></div>
         <div class="help">For trying the app and recording demos. An orange banner shows whenever demo mode is on, and saved nights are marked "sim".</div>
       </div>
@@ -357,6 +364,7 @@
     cName: store.get('cName', ''),
     cPhone: store.get('cPhone', ''),
     vol: store.get('vol2', 'normal'),
+    alerts: store.get('alerts', false),
     demo: store.get('demo', 'off'),
     tone: store.get('tone', 'auto'),
     demoSpeed: store.get('demoSpeed', 10),
@@ -393,6 +401,11 @@
   // monitoring state
   let armed = false, alarmOn = false, lastBreathAgo = 0, sessionLog = null, lastNorm = 0.5;
   let everArmed = false, curPause = null, sessTicks = 0, winRates = [];
+  // monitoring state: 'starting' | 'seeing' | 'pause' | 'lost'
+  let monState = 'starting', clarBuf = [], lastMoveSec = -999, seenSec = 0, lastCheckSec = 0;
+  const CLAR_MIN = 6;               // breath clarity needed to count breathing as clearly seen
+  const SNR_MIN = 12;               // breath size vs leftover jitter (steady breathing scores ~30, irregular 13–22 in simulation)
+  let lastSNR = 0;
   let lastActivity = Date.now();
 
   function resetBuffer() {
@@ -735,63 +748,110 @@
   function updateRate() {
     if (!toneLocked) return;
     const est = estimateRate();
-    if (est && settings.testing) feedTest(est);
-    if (!est || est.bpm < 5 || est.bpm > 35 || !armed) return;
-    if (lastBreathAgo > 10) { $('bpm').textContent = '--'; $('bpm').classList.add('idle'); return; }
+    if (!est) return;
+    if (settings.testing) feedTest(est);
+    clarBuf.push(est.prominence); if (clarBuf.length > 20) clarBuf.shift();   // last ~10 s
+    if (monState !== 'seeing' || est.bpm < 5 || est.bpm > 35) { $('bpm').textContent = '--'; $('bpm').classList.add('idle'); return; }
     $('bpm').textContent = Math.round(est.bpm);
     $('bpm').classList.remove('idle');
-    if (sessionLog && est.prominence > 5 && lastBreathAgo < 6) winRates.push(est.bpm);
+    if (sessionLog && est.prominence >= CLAR_MIN && lastBreathAgo < 6) winRates.push(est.bpm);
   }
 
   // ---------------------------------------------------------------------------
-  // Pause detection
-  // Arm once Echo has seen steady breathing (6+ breaths in the last minute).
-  // While armed, alarm if no breath is found for the set number of seconds.
+  // What Echo can see, once a second
+  //   seeing : breaths found and clearly above the noise -> record
+  //   pause  : breaths stopped with no big movement just before -> log a pause
+  //   lost   : breaths stopped right after a big movement (rolled over), or the
+  //            signal is too unclear -> don't record, don't guess
   // ---------------------------------------------------------------------------
   function checkBreathing() {
-    if (!toneLocked) { setStatus('bad', 'No signal. Check volume and placement'); return; }
+    const now = sessTicks / SLOW_HZ, dt = Math.max(0, now - lastCheckSec); lastCheckSec = now;
+    if (!toneLocked) { setLost('No tone signal. Check volume and placement'); return; }
     const M = Math.min(ringFilled, SLOW_HZ * 90);
     if (M < SLOW_HZ * 15) { setStatus('wait', 'Getting ready'); return; }
     const d = displacement(M);
     const { breaths } = detectBreaths(Array.from(d), SLOW_HZ);
-    const recent = breaths.filter(b => (M - 1 - b.peak) / SLOW_HZ <= 60);
     lastBreathAgo = breaths.length ? (M - 1 - breaths[breaths.length - 1].peak) / SLOW_HZ : M / SLOW_HZ;
-    trackPause();
 
-    if (!armed) {
-      if (recent.length >= 6 && lastBreathAgo < 8) { armed = true; everArmed = true; }
-      else { setStatus('wait', 'Waiting for steady breathing'); hideCountdown(); return; }
+    // big movement = a 1-second swing much larger than a normal breath
+    const medAmp = breaths.length ? median(breaths.map(b => b.amp)) : 0;
+    let swing = 0;
+    for (let k = Math.max(0, M - SLOW_HZ * 15); k + SLOW_HZ < M; k++) swing = Math.max(swing, Math.abs(d[k + SLOW_HZ] - d[k]));
+    if (medAmp > 0 && swing > 2.5 * medAmp) lastMoveSec = now;
+
+    const clar = clarBuf.length ? median(clarBuf) : 0;
+    // second check that works for irregular breathing too: how far each breath
+    // stands above the jitter left after smoothing (last 30 s)
+    const W = Math.min(M, SLOW_HZ * 30); let ss = 0;
+    for (let k = M - W; k < M; k++) {
+      let a = 0, n = 0;
+      for (let q = Math.max(0, k - 4); q <= Math.min(M - 1, k + 4); q++) { a += d[q]; n++; }
+      ss += (d[k] - a / n) ** 2;
     }
-    if (alarmOn) return;
+    const noise = Math.sqrt(ss / W);
+    const recentB = breaths.filter(b => (M - 1 - b.peak) / SLOW_HZ <= 30);
+    lastSNR = recentB.length >= 2 ? median(recentB.map(b => b.amp)) / (noise + 1e-12) : 0;
+    const breathingNow = lastBreathAgo < 10;
+    const good = breathingNow && (clar >= CLAR_MIN || lastSNR >= SNR_MIN);
 
-    const limit = settings.pauseSec;
-    if (lastBreathAgo >= limit) { triggerAlarm(Math.round(lastBreathAgo)); return; }
-    if (lastBreathAgo >= 8) {
-      setStatus('wait', 'No breath for ' + Math.round(lastBreathAgo) + ' s');
-      $('countdown').textContent = 'No breath detected for ' + Math.round(lastBreathAgo) + ' s. Alarm at ' + limit + ' s.';
-      $('countdown').classList.add('show');
-      $('nightText').textContent = 'No breath for ' + Math.round(lastBreathAgo) + ' s';
+    if (good) {
+      if (monState === 'pause') closePause();
+      monState = 'seeing'; everArmed = true;
+    } else if (!breathingNow) {
+      if (monState === 'seeing') {
+        const movedNearStop = now - lastMoveSec <= lastBreathAgo + 15;
+        if (movedNearStop) monState = 'lost';
+        else {
+          monState = 'pause';
+          const start = now - lastBreathAgo, prev = sessionLog && sessionLog.pauses[sessionLog.pauses.length - 1];
+          if (prev && Math.abs(prev[0] - start) <= 3) {   // same pause flickered: reopen it instead of logging twice
+            sessionLog.pauses.pop(); $('pausesV').textContent = sessionLog.pauses.length;
+            curPause = { s: prev[0], len: Math.max(prev[1], lastBreathAgo), alarm: !!prev[2] };
+          } else curPause = { s: start, len: lastBreathAgo, alarm: false };
+        }
+      } else if (monState === 'pause') {
+        curPause.len = Math.max(curPause.len, lastBreathAgo);
+        if (lastBreathAgo > 60) { curPause = null; monState = 'lost'; }   // too long to be a pause: probably out of view
+      } else if (monState === 'starting') {
+        // still looking
+      }
     } else {
-      setStatus('ok', 'Watching · breathing normally');
-      hideCountdown();
-      $('nightText').textContent = 'Watching · tap to open';
+      // breaths found but not clearly above the noise
+      if (monState === 'pause') closePause();
+      if (monState !== 'starting') monState = 'lost';
+    }
+
+    if (monState === 'seeing' || monState === 'pause') seenSec += dt;
+    if (sessionLog && now > 0) $('seenV').textContent = Math.round(100 * seenSec / now) + '%';
+
+    if (alarmOn) return;
+    if (monState === 'seeing') {
+      setStatus('ok', 'Recording · breathing seen clearly'); hideCountdown();
+      $('nightText').textContent = 'Recording · tap to open';
+    } else if (monState === 'pause') {
+      const sec = Math.round(lastBreathAgo);
+      setStatus('wait', 'Pause in breathing · ' + sec + ' s');
+      $('nightText').textContent = 'Pause in breathing · ' + sec + ' s';
+      if (settings.alerts) {
+        if (lastBreathAgo >= settings.pauseSec) { triggerAlarm(sec); return; }
+        $('countdown').textContent = 'No breath detected for ' + sec + ' s. Alarm at ' + settings.pauseSec + ' s.';
+        $('countdown').classList.add('show');
+      }
+    } else if (monState === 'lost') {
+      setLost("Can't see breathing clearly · not recording");
+    } else {
+      setStatus('wait', 'Looking for breathing'); hideCountdown();
+      $('nightText').textContent = 'Looking for breathing';
     }
   }
-  // record every pause of 10 s or more for the morning report
-  function trackPause() {
-    if (!sessionLog || !everArmed) return;
-    const now = sessTicks / SLOW_HZ;
-    if (lastBreathAgo >= 10) {
-      if (!curPause) curPause = { s: now - lastBreathAgo, len: lastBreathAgo, alarm: false };
-      curPause.len = Math.max(curPause.len, lastBreathAgo);
-    } else if (curPause) {
-      closePause();
-    }
+  function setLost(text) {
+    setStatus('wait', text); hideCountdown();
+    $('nightText').textContent = "Can't see breathing clearly";
   }
   function closePause() {
     if (!curPause) return;
-    sessionLog.pauses.push([Math.round(curPause.s), Math.round(curPause.len), curPause.alarm ? 1 : 0]);
-    $('pausesV').textContent = sessionLog.pauses.length;
+    sessionLog && sessionLog.pauses.push([Math.round(curPause.s), Math.round(curPause.len), curPause.alarm ? 1 : 0]);
+    $('pausesV').textContent = sessionLog ? sessionLog.pauses.length : 0;
     curPause = null;
   }
   function hideCountdown() { $('countdown').classList.remove('show'); }
@@ -846,8 +906,9 @@
   function stopBeeps() { if (beepTimer) { clearInterval(beepTimer); beepTimer = null; } }
   $('okBtn').addEventListener('click', () => {
     alarmOn = false; armed = false; stopBeeps();
+    closePause(); monState = 'starting';
     $('alarm').classList.remove('show');
-    setStatus('wait', 'Waiting for steady breathing');
+    setStatus('wait', 'Looking for breathing');
     hideCountdown(); noteActivity();
   });
 
@@ -978,6 +1039,7 @@
     running = true; alarmOn = false;
     sessionLog = { start: Date.now(), timeline: [], pauses: [], alarms: 0, waxWane: false };
     everArmed = false; curPause = null; sessTicks = 0; winRates = []; tRates = []; tClars = [];
+    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; $('seenV').textContent = '—';
     $('pausesV').textContent = '0'; $('patternV').textContent = '—';
     $('bpm').textContent = '--'; $('bpm').classList.add('idle');
     show('tWatch'); sizeWave(); setStatus('wait', 'Getting ready');
@@ -1012,7 +1074,7 @@
     const s = sessionLog;
     if (winRates.length) s.timeline.push([sessTicks / SLOW_HZ, Math.round(median(winRates))]);
     const entry = finishSession({ id: s.start, start: s.start, durSec: Math.round(sessTicks / SLOW_HZ),
-      timeline: s.timeline, pauses: s.pauses, alarms: s.alarms, waxWane: s.waxWane, sim: !!SIM });
+      timeline: s.timeline, pauses: s.pauses, alarms: s.alarms, waxWane: s.waxWane, sim: !!SIM, seenSec: Math.round(seenSec) });
     saveSessions(loadSessions().concat([entry]));
     selectedSessionId = entry.id;
   }
@@ -1034,7 +1096,8 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   // ---- baseline: median nightly average of up to 14 earlier qualifying nights
-  function nightsForTrends(all) { return all.filter(s => s.minutes >= MIN_NIGHT_MIN && s.avgRate); }
+  // a night counts when Echo saw breathing for 30+ minutes and at least half the night
+  function nightsForTrends(all) { return all.filter(s => s.avgRate && (s.seenMin ?? s.minutes) >= MIN_NIGHT_MIN && (s.coverage ?? 1) >= 0.5); }
   function baselineBefore(nights, idx) {
     const prev = nights.slice(Math.max(0, idx - 14), idx).map(n => n.avgRate);
     if (prev.length < 3) return null;
@@ -1278,7 +1341,7 @@
     const longest = s.pauses.length ? Math.max(...s.pauses.map(p => p[1])) : 0;
     const chips = all.slice(-10).reverse().map(x =>
       '<button class="chip' + (x.id === s.id ? ' on' : '') + '" data-id="' + x.id + '">' + esc(fmtDay(x.start)) + (x.sample ? ' · sample' : x.sim ? ' · sim' : '') + '</button>').join('');
-    let normalLine = 'Needs 3 earlier nights of 30+ minutes';
+    let normalLine = (s.coverage ?? 1) < 0.5 ? 'Not compared (breathing seen less than half the night)' : 'Needs 3 earlier qualifying nights';
     if (cmp) normalLine = cmp.flagged ? '<span class="flagtxt">' + ICON_FLAG + 'Above normal</span> (' + (cmp.diff > 0 ? '+' : '') + cmp.diff + ' vs ' + cmp.base + ')' : 'Within normal (normal is ' + cmp.base + ')';
     root.innerHTML =
       '<div class="chips">' + chips + '</div>' +
@@ -1287,12 +1350,14 @@
         '<div class="tiles">' +
           '<div><div class="k">Average breathing</div><div class="v">' + (s.avgRate ?? '—') + '<small>' + (s.avgRate ? ' /min' : '') + '</small></div></div>' +
           '<div><div class="k">Pauses ≥ 10 s</div><div class="v">' + s.pauseCount + '</div></div>' +
-          '<div><div class="k">Alarms</div><div class="v">' + s.alarms + '</div></div>' +
+          '<div><div class="k">Breathing seen</div><div class="v">' + Math.round(100 * s.coverage) + '<small>%</small></div></div>' +
         '</div>' +
         '<div class="charttitle">Breathing rate through the night</div>' +
         '<div class="chartwrap"><canvas id="nightChart" style="height:190px" aria-label="Breathing rate through the night"></canvas><div class="tip" id="nightTip"></div></div>' +
         '<div class="legend"><span><i class="lk line"></i>Breaths per minute</span><span><i class="lk pause"></i>Pause of 10 s or more</span></div>' +
         '<div class="kv"><span>Length</span><span>' + fmtDur(s.minutes) + '</span></div>' +
+        '<div class="kv"><span>Breathing seen</span><span>' + fmtDur(s.seenMin) + ' of ' + fmtDur(s.minutes) + '</span></div>' +
+        (s.alarms ? '<div class="kv"><span>Alarms</span><span>' + s.alarms + '</span></div>' : '') +
         '<div class="kv"><span>Typical range</span><span>' + (s.lowRate ? s.lowRate + '–' + s.highRate + ' /min' : '—') + '</span></div>' +
         '<div class="kv"><span>Longest pause</span><span>' + (longest ? longest + ' s' : 'None') + '</span></div>' +
         '<div class="kv"><span>Waxing–waning pattern</span><span>' + (s.waxWane ? 'Seen' : 'Not seen') + '</span></div>' +
@@ -1313,7 +1378,8 @@
       fmtDay(s.start) + ', ' + fmtTime(s.start) + ' to ' + fmtTime(s.start + s.durSec * 1000) + ' (' + fmtDur(s.minutes) + ')',
       'Average breathing: ' + (s.avgRate ? s.avgRate + ' breaths/min' + (s.lowRate ? ' (typical ' + s.lowRate + '–' + s.highRate + ')' : '') : 'not recorded'),
       'Breathing pauses of 10+ seconds: ' + s.pauseCount + (longest ? ' (longest ' + longest + ' s)' : ''),
-      'Alarms: ' + s.alarms,
+      'Breathing clearly seen: ' + fmtDur(s.seenMin) + ' of ' + fmtDur(s.minutes) + ' (' + Math.round(100 * s.coverage) + '%)',
+      ...(s.alarms ? ['Alarms: ' + s.alarms] : []),
       'Waxing-and-waning pattern: ' + (s.waxWane ? 'seen' : 'not seen')
     ];
     if (cmp) lines.push(cmp.flagged ? 'Above normal: ' + s.avgRate + ' vs a usual ' + cmp.base + ' breaths/min' + (cmp.twoInRow ? ', 2 nights in a row' : '') : 'Within this person\'s normal range');
@@ -1342,7 +1408,7 @@
       ? '<button class="btn secondary" id="sampleBtn">Remove sample nights</button>'
       : '<button class="btn secondary" id="sampleBtn">Load 14 sample nights</button>';
     if (nights.length < 4) {
-      root.innerHTML = '<div class="card"><h2>Not enough nights yet</h2><p>Trends needs at least 4 nights of 30 minutes or more. ' +
+      root.innerHTML = '<div class="card"><h2>Not enough nights yet</h2><p>Trends needs at least 4 nights where Echo saw breathing for 30+ minutes and at least half the night. ' +
         'Echo learns this person\'s normal breathing rate from the earlier nights, then compares each new night to it.</p>' +
         '<p>You have ' + nights.length + ' so far.</p></div>' + sampleBtn +
         '<p class="hint">Sample nights are made-up data for trying out this screen. They are labeled "sample" everywhere.</p>';
@@ -1397,7 +1463,7 @@
       const pauses = [];
       for (let i = 0; i < nP; i++) pauses.push([Math.round(rnd() * durSec), 10 + Math.floor(rnd() * 8), 0]);
       pauses.sort((a, b) => a[0] - b[0]);
-      out.push(finishSession({ id: start.getTime(), start: start.getTime(), durSec, timeline, pauses, alarms: 0, waxWane: high && rnd() < 0.6, sample: true }));
+      out.push(finishSession({ id: start.getTime(), start: start.getTime(), durSec, timeline, pauses, alarms: 0, waxWane: high && rnd() < 0.6, sample: true, seenSec: Math.round(durSec * (0.72 + rnd() * 0.23)) }));
     }
     return out;
   }
@@ -1409,6 +1475,9 @@
     s.lowRate = rates.length ? rates[Math.floor(rates.length * 0.1)] : null;
     s.highRate = rates.length ? rates[Math.floor(rates.length * 0.9)] : null;
     s.pauseCount = s.pauses.length;
+    if (s.seenSec == null) s.seenSec = s.durSec;              // sessions saved before coverage existed
+    s.seenMin = Math.round(s.seenSec / 60);
+    s.coverage = s.durSec ? Math.min(1, s.seenSec / s.durSec) : 0;
     return s;
   }
   function toggleSample() {
@@ -1480,6 +1549,8 @@
   $('testSw').checked = !!settings.testing;
   $('testSw').addEventListener('change', e => { settings.testing = e.target.checked; store.set('testing', settings.testing); applyTesting(); });
   applyTesting();
+  $('alertSw').checked = !!settings.alerts;
+  $('alertSw').addEventListener('change', e => { settings.alerts = e.target.checked; store.set('alerts', settings.alerts); });
   $('soundSw').checked = settings.sound;
   $('soundSw').addEventListener('change', e => { settings.sound = e.target.checked; store.set('sound', settings.sound); });
   $('cName').value = settings.cName; $('cPhone').value = settings.cPhone;
@@ -1517,6 +1588,7 @@
   wireSeg('speedSeg', 'demoSpeed', Number, applyDemo);
   function simDepthMM(t) {
     if (SIM === 'pause') { const p = t % 120; return p >= 70 && p < 110 ? 0 : 4; }
+    if (SIM === 'roll') return 4;
     if (SIM === 'wax') { const p = t % 50; return p < 40 ? 7 * Math.sin(Math.PI * p / 40) : 0; }
     if (SIM === 'irregular') { const k = Math.floor(t / 4); return 2 + 5 * Math.abs(Math.sin(k * 12.9898) * 43758.5453 % 1); }
     return 4;
@@ -1537,15 +1609,24 @@
         simT += 1 / SLOW_HZ;
         simPh += 2 * Math.PI * simRate(simT) / 60 / SLOW_HZ;
         const dmm = simDepthMM(simT) * 0.5 * (1 - Math.cos(simPh));
-        const ang = 4 * Math.PI * (0.3 + dmm / 1000) / lam;
-        pushSlow(1 + 0.05 * Math.cos(ang) + 0.002 * (Math.random() * 2 - 1),
-                 0.4 + 0.05 * Math.sin(ang) + 0.002 * (Math.random() * 2 - 1));
+        // "roll": every 150 s the person rolls away (a 5 cm move over 2 s), the chest
+        // echo gets 15x weaker for 60 s, then they roll back
+        let shift = 0, amp = 0.05;
+        if (SIM === 'roll') {
+          const p = simT % 150;
+          if (p >= 80 && p < 82) shift = 0.05 * (p - 80) / 2;
+          else if (p >= 82 && p < 142) { shift = 0.05; amp = 0.0033; }
+          else if (p >= 142 && p < 144) shift = 0.05 * (1 - (p - 142) / 2);
+        }
+        const ang = 4 * Math.PI * (0.3 + shift + dmm / 1000) / lam;
+        pushSlow(1 + amp * Math.cos(ang) + 0.002 * (Math.random() * 2 - 1),
+                 0.4 + amp * Math.sin(ang) + 0.002 * (Math.random() * 2 - 1));
       }
     }, 100);
   }
 
   // test hook so automated checks can read state (harmless in normal use)
-  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, pauses: sessionLog ? sessionLog.pauses.slice() : null }; } };
+  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null }; } };
 })();
 </script>
 </body>
