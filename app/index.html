@@ -56,43 +56,69 @@
   .linkbtn { appearance: none; border: none; background: none; padding: 6px 0; color: var(--deep); font-size: 14px; font-weight: 600; text-decoration: underline; text-decoration-color: var(--tan); text-underline-offset: 4px; cursor: pointer; }
 
   /* ---------- Tonight: idle ---------- */
-  .hero { position: relative; display: flex; align-items: center; justify-content: center; height: 210px; margin: 4px 0 6px; }
-  .orb { position: absolute; width: 112px; height: 112px; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #FFF7EC 0%, var(--breath-dim) 45%, var(--breath) 100%); box-shadow: 0 18px 50px -12px rgba(42,125,118,.45); animation: breathe 5.5s ease-in-out infinite; }
-  .ring { position: absolute; width: 112px; height: 112px; border-radius: 50%; border: 1.5px solid var(--breath); opacity: 0; animation: ripple 5.5s var(--ease) infinite; }
-  .ring:nth-child(2) { animation-delay: 1.1s; } .ring:nth-child(3) { animation-delay: 2.2s; border-color: var(--coral); }
-  @keyframes breathe { 0%,100% { transform: scale(.86); } 45% { transform: scale(1.06); } }
-  @keyframes ripple { 0% { transform: scale(.9); opacity: .55; } 100% { transform: scale(2.6); opacity: 0; } }
-  .steps { margin: 0; padding: 0; list-style: none; counter-reset: s; }
-  .steps li { counter-increment: s; display: flex; gap: 14px; padding: 12px 0; border-top: 1px solid var(--edge); font-size: 14px; line-height: 1.5; color: var(--dim); }
-  .steps li:first-child { border-top: none; padding-top: 0; }
-  .steps li:last-child { padding-bottom: 0; }
-  .steps li::before { content: counter(s); flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--wash); color: var(--deep); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-  .steps b { color: var(--ink); font-weight: 650; }
+  .greet { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .greet h1 { margin-bottom: 0; }
+  .hello { margin: 0; font-size: 15px; color: var(--amber); font-weight: 600; }
+  .howpill { appearance: none; border: none; cursor: pointer; background: var(--wash); color: var(--deep); font-size: 13px; font-weight: 650; padding: 9px 14px; border-radius: 999px; margin-bottom: 4px; }
+  .arch { position: relative; border-radius: 999px 999px 30px 30px; overflow: hidden; aspect-ratio: 340 / 290; background: #112F2C; box-shadow: 0 30px 50px -30px rgba(15,38,36,.6); }
+  .arch svg { display: block; width: 100%; height: 100%; }
+  .star { animation: twinkle 3.2s ease-in-out infinite; } .star.s2 { animation-delay: 1.1s; } .star.s3 { animation-delay: 2.1s; }
+  @keyframes twinkle { 50% { opacity: .2; } }
+  .arc { animation: arcpulse 2.4s ease-out infinite; opacity: 0; } .arc.a2 { animation-delay: .3s; } .arc.a3 { animation-delay: .6s; }
+  @keyframes arcpulse { 0% { opacity: 0; } 25% { opacity: 1; } 70%, 100% { opacity: 0; } }
+  .chest { transform-box: fill-box; transform-origin: 50% 100%; animation: chest 5s ease-in-out infinite; }
+  @keyframes chest { 50% { transform: scaleY(1.07); } }
+  .btn.start { position: relative; z-index: 2; margin: -32px auto 0; width: calc(100% - 40px); display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--coral); color: #2A0806; font-size: 18px; padding: 19px; box-shadow: 0 14px 30px -14px rgba(180,72,62,.7); }
+  .btn.start svg { width: 20px; height: 20px; fill: currentColor; }
+  .sechead { display: flex; align-items: baseline; justify-content: space-between; margin: 28px 0 12px; }
+  .sechead h2 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -0.02em; color: var(--deep); }
+  .sechead span { font-size: 13px; color: var(--faint); }
+  .rail { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -18px; padding: 2px 18px 8px; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
+  .stepcard { flex: none; width: 76%; max-width: 300px; scroll-snap-align: start; scroll-margin-left: 18px; background: var(--panel); border: 1px solid var(--edge); border-radius: 24px; overflow: hidden; }
+  .stepcard .art { position: relative; height: 112px; display: flex; align-items: center; justify-content: center; }
+  .stepcard .art svg { width: 64px; height: 64px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .stepcard .n { position: absolute; left: 14px; top: 10px; font-size: 40px; font-weight: 300; font-variation-settings: "opsz" 96; letter-spacing: -0.04em; opacity: .55; }
+  .stepcard h3 { margin: 14px 16px 6px; font-size: 17px; font-weight: 650; letter-spacing: -0.01em; color: var(--ink); }
+  .stepcard p { margin: 0 16px 16px; font-size: 14px; line-height: 1.5; color: var(--dim); }
+  .c1 .art { background: var(--wash); color: var(--deep); }
+  .c2 .art { background: var(--sand); color: #6B4E2A; }
+  .c3 .art { background: #F6D3CB; color: #8F3A31; }
+  .c4 .art { background: var(--deep); color: #F3E6D0; }
 
   /* ---------- Tonight: calibrating ---------- */
   .progress { height: 8px; border-radius: 4px; background: var(--wash); overflow: hidden; margin: 14px 0 10px; }
   .progress > div { height: 100%; width: 0; background: var(--breath); border-radius: 4px; transition: width 0.25s; }
   .calib-freq { font-size: 14px; color: var(--dim); font-variant-numeric: tabular-nums; }
 
-  /* ---------- Tonight: watching ---------- */
-  .status { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--panel); border: 1px solid var(--edge); font-size: 13px; font-weight: 600; color: var(--dim); }
-  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
-  .status.ok { color: var(--breath); } .status.ok .dot { background: var(--breath); }
-  .status.wait { color: var(--amber); } .status.wait .dot { background: var(--tan); }
-  .status.bad { color: var(--alarm); } .status.bad .dot { background: var(--coral); }
-  .big { display: flex; align-items: baseline; gap: 12px; margin: 20px 0 4px; }
-  .big .num { font-size: 96px; font-weight: 300; font-variation-settings: "opsz" 96; letter-spacing: -0.05em; line-height: 0.85; font-variant-numeric: tabular-nums; color: var(--deep); }
-  .big .num.idle { color: var(--sand); }
-  .big .unit { color: var(--dim); font-size: 15px; line-height: 1.3; }
+  /* ---------- Tonight: watching (static: nothing animates while listening) ---------- */
+  .live { background: var(--deep); color: #FFF4E4; border-radius: 30px; padding: 18px 18px 8px; position: relative; overflow: hidden; }
+  .live::after { content: ""; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; border: 1px solid rgba(169,214,207,.18); box-shadow: 0 0 0 30px rgba(169,214,207,.05), 0 0 0 60px rgba(169,214,207,.035); pointer-events: none; }
+  .status { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(255,244,228,.08); font-size: 13px; font-weight: 600; color: #C3D6D2; position: relative; z-index: 1; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: #7E9A95; }
+  .status.ok { color: #A9D6CF; } .status.ok .dot { background: #A9D6CF; }
+  .status.wait { color: #E7C99A; } .status.wait .dot { background: #E7C99A; }
+  .status.bad { color: #F4A497; } .status.bad .dot { background: #F4A497; }
+  .big { display: flex; align-items: baseline; gap: 12px; margin: 22px 0 4px; position: relative; z-index: 1; }
+  .big .num { font-size: 104px; font-weight: 300; font-variation-settings: "opsz" 96; letter-spacing: -0.055em; line-height: 0.82; font-variant-numeric: tabular-nums; color: #FFF4E4; }
+  .big .num.idle { color: rgba(255,244,228,.22); }
+  .big .unit { color: #A9C9C3; font-size: 15px; line-height: 1.3; }
   canvas { display: block; width: 100%; }
-  #wave { height: 130px; border-radius: 20px; background: var(--wash); margin: 14px 0 4px; }
-  .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 10px; margin-top: 12px; }
-  .meta .k { font-size: 12px; color: var(--dim); margin-bottom: 4px; }
-  .meta .v { font-size: 18px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
-  .bars { display: inline-flex; gap: 3px; align-items: flex-end; height: 16px; }
-  .bars i { width: 5px; border-radius: 2px; background: var(--sand); }
+  #wave { height: 120px; margin: 10px -18px 0; width: calc(100% + 36px); }
+  .mtiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .mt { border-radius: 22px; padding: 14px; min-height: 108px; display: flex; flex-direction: column; }
+  .mt .mi { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: auto; background: rgba(255,255,255,.55); }
+  .mt .mi svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .mt .k { font-size: 12px; margin: 12px 0 2px; opacity: .8; }
+  .mt .v { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .t-teal { background: var(--wash); color: var(--deep); }
+  .t-sand { background: var(--sand); color: #4A3820; }
+  .t-coral { background: #F6D3CB; color: #6E241C; }
+  .t-paper { background: var(--panel); border: 1px solid var(--edge); color: var(--ink); }
+  .bars { display: inline-flex; gap: 3px; align-items: flex-end; height: 18px; }
+  .bars i { width: 5px; border-radius: 2px; background: rgba(23,80,77,.18); }
   .bars i:nth-child(1) { height: 25%; } .bars i:nth-child(2) { height: 50%; } .bars i:nth-child(3) { height: 75%; } .bars i:nth-child(4) { height: 100%; }
-  .bars i.on { background: var(--breath); }
+  .bars i.on { background: var(--deep); }
   .countdown { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: #FBE7E2; border: 1px solid #F1C2B9; color: var(--alarm); font-size: 14px; font-weight: 600; }
   .countdown.show { display: block; }
   .hint { font-size: 13px; color: var(--faint); line-height: 1.5; margin: 10px 0 0; }
@@ -191,6 +217,50 @@
   th { color: var(--faint); font-weight: 600; font-size: 12px; }
   .sharebox { width: 100%; height: 160px; margin-top: 8px; background: var(--bg); color: var(--ink); border: 1px solid var(--edge); border-radius: 14px; padding: 12px; font: 13px/1.5 var(--sans); }
 
+  /* ---------- Reports: day strip, dawn hero, tiles ---------- */
+  .days { display: flex; gap: 8px; overflow-x: auto; margin: 0 -18px 14px; padding: 2px 18px 6px; scrollbar-width: none; }
+  .days::-webkit-scrollbar { display: none; }
+  .chip.day { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 56px; padding: 10px 8px 9px; border-radius: 20px; position: relative; }
+  .chip.day .dow { font-size: 12px; font-weight: 600; opacity: .75; }
+  .chip.day .dn { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .chip.day.on .dn { color: #FFF7EC; }
+  .chip.day .tag { font-style: normal; font-size: 10px; font-weight: 700; opacity: .7; }
+  .dawn { position: relative; overflow: hidden; border-radius: 30px; padding: 20px; margin-bottom: 12px; color: var(--deep); background: linear-gradient(165deg, #FDEBDD 0%, #F7D5C3 46%, #DCECE7 100%); }
+  .dawn::before { content: ""; position: absolute; width: 230px; height: 230px; left: -70px; bottom: -150px; border-radius: 50%; background: radial-gradient(circle, rgba(232,119,107,.45), rgba(232,119,107,0) 70%); }
+  .dawn > * { position: relative; }
+  .dawn .when { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; opacity: .8; }
+  .dawn .main { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+  .dawn .k { font-size: 13px; font-weight: 600; opacity: .8; }
+  .dawn .hnum { font-size: 84px; font-weight: 300; font-variation-settings: "opsz" 96; letter-spacing: -0.055em; line-height: .9; font-variant-numeric: tabular-nums; }
+  .dawn .hnum small { font-size: 17px; letter-spacing: 0; font-weight: 500; margin-left: 6px; opacity: .8; }
+  .dawn .k2 { font-size: 13px; opacity: .75; margin-top: 4px; }
+  .ringw { position: relative; width: 112px; height: 112px; flex: none; }
+  .ringw svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ringw .bg { stroke: rgba(255,255,255,.7); } .ringw .fg { stroke: var(--breath); transition: stroke-dashoffset 1.2s var(--ease); }
+  .ringw .lab { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ringw .lab b { font-size: 26px; font-weight: 600; letter-spacing: -0.03em; }
+  .ringw .lab span { font-size: 11px; font-weight: 600; opacity: .75; }
+  .dawn .cmp { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; background: rgba(255,255,255,.6); padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .duo .mt .v small { font-size: 13px; font-weight: 500; opacity: .75; }
+  /* ---------- Trends: verdict badge ---------- */
+  .verdict { display: grid; grid-template-columns: auto 1fr; gap: 14px 16px; align-items: center; border-radius: 30px; padding: 18px; margin-bottom: 12px; }
+  .verdict > div:last-child { display: contents; }
+  .verdict p { grid-column: 1 / -1; }
+  .verdict.ok { background: var(--wash); color: var(--deep); }
+  .verdict.flag { background: #FBE3DC; color: #7A2A21; }
+  .verdict p { margin: 0; font-size: 14px; line-height: 1.5; opacity: .85; }
+  .badge { flex: none; width: 96px; height: 96px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,.7); outline: 2px dashed currentColor; outline-offset: 4px; }
+  .badge .bn { font-size: 34px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; }
+  .badge .bl { font-size: 11px; font-weight: 650; opacity: .75; margin-top: 2px; }
+  .verdict .trendstatus { color: inherit; font-size: 19px; }
+  /* ---------- Settings: icon chips on section titles ---------- */
+  .card h2 { display: flex; align-items: center; gap: 10px; }
+  .gi { width: 30px; height: 30px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .gi svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .gi-coral { background: #F6D3CB; color: #8F3A31; } .gi-teal { background: var(--wash); color: var(--deep); }
+  .gi-sand { background: var(--sand); color: #6B4E2A; } .gi-deep { background: var(--deep); color: #F3E6D0; }
+
   /* ---------- Tab bar ---------- */
   nav { position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 30; max-width: 536px; margin: 0 auto; background: rgba(255,251,245,0.86); border: 1px solid var(--edge); border-radius: 26px; backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); box-shadow: 0 12px 30px -16px rgba(23,80,77,.35); }
   nav .in { display: flex; height: var(--tabbar); position: relative; }
@@ -206,67 +276,128 @@
   .countup { display: inline-block; }
 
   /* ---------- Intro: night-to-morning scroll story ---------- */
-  #intro { position: fixed; inset: 0; z-index: 60; background: var(--night); color: #F3E6D0; overflow: hidden; }
+  #intro { position: fixed; inset: 0; z-index: 60; background: var(--night); color: #F3E6D0; overflow: hidden; --cream: #F3E6D0; }
   #intro.gone { display: none; }
+  #introMorning { position: absolute; inset: 0; background: radial-gradient(circle at 50% 30%, #FFF6EA 0%, #F5EFE4 45%, #F1DCC8 100%); clip-path: circle(0% at 50% 32%); }
   #introGL { position: absolute; inset: 0; width: 100%; height: 100%; }
-  #introScroll { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #introScroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   #introScroll::-webkit-scrollbar { display: none; }
-  .scene { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 24px calc(56px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
-  .scene.first { justify-content: flex-end; }
-  .scene h2 { font-size: clamp(34px, 10vw, 54px); font-weight: 500; font-variation-settings: "opsz" 96; letter-spacing: -0.04em; line-height: 0.98; margin: 0 0 14px; }
-  .scene p { font-size: 17px; line-height: 1.5; margin: 0; max-width: 26em; opacity: .82; }
-  .wordmark { font-size: clamp(88px, 30vw, 150px); font-weight: 300; font-variation-settings: "opsz" 96; letter-spacing: -0.07em; line-height: .8; margin: 0 0 18px; }
-  .scene .reveal { opacity: 0; transform: translateY(24px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
-  .scene.in .reveal { opacity: 1; transform: none; }
-  .scene.in .reveal:nth-child(2) { transition-delay: .12s; }
-  .scene.in .reveal:nth-child(3) { transition-delay: .24s; }
-  .scrollcue { margin-top: 28px; font-size: 13px; opacity: .6; display: flex; align-items: center; gap: 10px; }
+  #intro h2 { font-size: clamp(36px, 10.5vw, 58px); font-weight: 500; font-variation-settings: "opsz" 96; letter-spacing: -0.045em; line-height: 0.98; margin: 0 0 16px; }
+  #intro p { font-size: 17px; line-height: 1.5; margin: 0; max-width: 25em; opacity: .82; }
+  /* words rise out of a mask when their panel becomes active */
+  #intro .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
+  #intro .w > span { display: inline-block; transform: translateY(105%); transition: transform .9s var(--ease) calc(var(--i) * 55ms); }
+  #intro .on .w > span { transform: none; }
+  #intro .panel p, .mornpin p, .mornpin .btn, .mornpin .fineprint { opacity: 0; transform: translateY(18px); transition: opacity .8s var(--ease) .35s, transform .8s var(--ease) .35s; }
+  #intro .panel.on p, .mornpin.on p { opacity: .82; transform: none; }
+  .mornpin.on .btn, .mornpin.on .fineprint { opacity: 1; transform: none; }
+  .mornpin.on .fineprint { opacity: .6; }
+  /* loader: count to 100, then the curtain opens */
+  #introLoader { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+  .lhalf { position: absolute; left: 0; right: 0; height: 50.5%; background: var(--sand); transition: transform 1.1s cubic-bezier(.76,0,.24,1); }
+  .lhalf.top { top: 0; } .lhalf.bot { bottom: 0; }
+  #introLoader.open .lhalf.top { transform: translateY(-101%); }
+  #introLoader.open .lhalf.bot { transform: translateY(101%); }
+  .lcount { position: absolute; left: 24px; bottom: calc(24px + env(safe-area-inset-bottom)); color: var(--deep); font-size: 76px; font-weight: 300; font-variation-settings: "opsz" 96; letter-spacing: -0.05em; line-height: 1; font-variant-numeric: tabular-nums; transition: opacity .3s; }
+  .lcount small { font-size: 26px; margin-left: 4px; }
+  #introLoader.open .lcount { opacity: 0; }
+  #introLoader.done { display: none; }
+  /* hero */
+  .ihero { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 24px calc(56px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
+  .wordmark { display: flex; font-size: clamp(96px, 32vw, 168px); font-weight: 300; font-variation-settings: "opsz" 96; letter-spacing: -0.07em; line-height: .82; margin: 0 0 20px; }
+  .wordmark .l { display: inline-block; overflow: hidden; padding-bottom: .06em; }
+  .wordmark .l > span { display: inline-block; transform: translateY(110%) rotate(8deg); transform-origin: left bottom; transition: transform 1.2s var(--ease); }
+  .wordmark .l:nth-child(2) > span { transition-delay: .08s; } .wordmark .l:nth-child(3) > span { transition-delay: .16s; } .wordmark .l:nth-child(4) > span { transition-delay: .24s; }
+  .ihero .fade { opacity: 0; transform: translateY(16px); transition: opacity 1s var(--ease) .5s, transform 1s var(--ease) .5s; }
+  .ihero.on .wordmark .l > span { transform: none; }
+  .ihero.on .fade { opacity: .82; transform: none; }
+  .scrollcue { margin-top: 28px; font-size: 13px; display: flex; align-items: center; gap: 10px; }
   .scrollcue i { width: 1px; height: 28px; background: currentColor; transform-origin: top; animation: cue 2.2s var(--ease) infinite; }
   @keyframes cue { 0% { transform: scaleY(0); } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
-  .introSkip { position: absolute; z-index: 2; top: calc(14px + env(safe-area-inset-top)); right: 16px; appearance: none; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; opacity: .75; cursor: pointer; }
-  .introBar { position: absolute; z-index: 2; left: 24px; right: 24px; top: calc(20px + env(safe-area-inset-top)); max-width: 120px; height: 2px; background: rgba(127,127,127,.3); border-radius: 1px; overflow: hidden; }
+  /* horizontal section: vertical scroll slides the panels sideways */
+  .hz { height: 360vh; position: relative; }
+  .hzpin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+  .hztrack { display: flex; height: 100%; will-change: transform; }
+  .panel { flex: none; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 24px calc(64px + env(safe-area-inset-bottom)); }
+  .panel > * { max-width: 512px; }
+  @media (min-width: 600px) { .panel { padding-left: calc(50% - 256px); } }
+  .hzdots { position: absolute; left: 24px; bottom: calc(30px + env(safe-area-inset-bottom)); display: flex; gap: 6px; }
+  .hzdots i { width: 6px; height: 6px; border-radius: 3px; background: currentColor; opacity: .3; transition: width .4s var(--ease), opacity .4s; }
+  .hzdots i.on { width: 22px; opacity: .9; }
+  @media (min-width: 600px) { .hzdots { left: calc(50% - 256px); } }
+  /* marquee band: two lines sliding opposite ways with the scroll */
+  .marq { padding: 22vh 0 14vh; overflow: hidden; }
+  .mq { display: flex; align-items: center; gap: 22px; white-space: nowrap; font-size: clamp(54px, 17vw, 110px); font-weight: 600; font-variation-settings: "opsz" 96; letter-spacing: -0.045em; line-height: 1.05; will-change: transform; }
+  .mq span { color: transparent; -webkit-text-stroke: 1.2px rgba(243,230,208,.7); }
+  .mq.alt span { color: #F3E6D0; -webkit-text-stroke: 0; }
+  .mq.alt { font-weight: 300; }
+  .mq b { flex: none; width: .28em; height: .28em; border-radius: 50%; background: var(--coral); }
+  /* morning: a cream circle opens over the night */
+  .morn { height: 230vh; position: relative; }
+  .mornpin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 24px calc(48px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; color: var(--deep); }
+  .mornpin .btn { margin-top: 26px; }
+  .mornpin .fineprint { font-size: 12px; margin-top: 14px; }
+  .introSkip { position: absolute; z-index: 6; top: calc(14px + env(safe-area-inset-top)); right: 16px; appearance: none; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; opacity: .75; cursor: pointer; }
+  .introBar { position: absolute; z-index: 6; left: 24px; top: calc(28px + env(safe-area-inset-top)); width: 120px; height: 2px; background: rgba(127,127,127,.3); border-radius: 1px; overflow: hidden; }
   .introBar i { display: block; height: 100%; width: 100%; background: currentColor; transform-origin: left; transform: scaleX(0); }
-  .scene .btn { margin-top: 26px; background: var(--deep); }
-  .scene .fineprint { font-size: 12px; opacity: .6; margin-top: 14px; }
 
   /* While Echo is listening, nothing animates: the audio work gets the phone to itself. */
   body.listening *, body.listening *::before, body.listening *::after { animation: none !important; transition: none !important; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
     #alarm.show { background: #6E1A14; }
-    .scene .reveal { opacity: 1; transform: none; }
+    #intro .w > span, .wordmark .l > span { transform: none; } #introLoader { display: none; }
+    #intro .panel p, .mornpin p, .mornpin .btn, .ihero .fade { opacity: .85; transform: none; }
   }
 </style>
 </head>
 <body>
 <!-- ==================== INTRO (first open, and "How Echo works") ==================== -->
 <div id="intro" class="gone" aria-label="How Echo works">
+  <div id="introMorning" aria-hidden="true"></div>
   <canvas id="introGL" aria-hidden="true"></canvas>
+  <div id="introLoader" aria-hidden="true">
+    <div class="lhalf top"></div><div class="lhalf bot"></div>
+    <div class="lcount"><span id="lnum">0</span><small>%</small></div>
+  </div>
   <div class="introBar" aria-hidden="true"><i id="introProg"></i></div>
   <button class="introSkip" id="introSkip">Skip</button>
   <div id="introScroll">
-    <section class="scene first" data-shape="0">
-      <div class="wordmark reveal">echo</div>
-      <p class="reveal">A breathing monitor that works with sound, for the people you worry about at night.</p>
-      <div class="scrollcue reveal"><i></i>Scroll to see how it works</div>
+    <section class="ihero" id="iHero">
+      <div class="wordmark" aria-label="echo"><span class="l"><span>e</span></span><span class="l"><span>c</span></span><span class="l"><span>h</span></span><span class="l"><span>o</span></span></div>
+      <p class="fade">A breathing monitor that works with sound, for the people you worry about at night.</p>
+      <div class="scrollcue fade"><i></i>Scroll to see how it works</div>
     </section>
-    <section class="scene" data-shape="1">
-      <h2 class="reveal">Your phone plays a tone too high to hear.</h2>
-      <p class="reveal">Echo sends out a steady sound around 17 kHz and listens for it to bounce back. No camera, nothing to wear.</p>
+    <section class="hz" id="iHz">
+      <div class="hzpin">
+        <div class="hztrack" id="hzTrack">
+          <article class="panel">
+            <h2><span class="w"><span style="--i:0">Your</span></span> <span class="w"><span style="--i:1">phone</span></span> <span class="w"><span style="--i:2">plays</span></span> <span class="w"><span style="--i:3">a</span></span> <span class="w"><span style="--i:4">tone</span></span> <span class="w"><span style="--i:5">too</span></span> <span class="w"><span style="--i:6">high</span></span> <span class="w"><span style="--i:7">to</span></span> <span class="w"><span style="--i:8">hear.</span></span></h2>
+            <p>Echo sends out a steady sound around 17 kHz and listens for it to bounce back. No camera, nothing to wear.</p>
+          </article>
+          <article class="panel">
+            <h2><span class="w"><span style="--i:0">Every</span></span> <span class="w"><span style="--i:1">breath</span></span> <span class="w"><span style="--i:2">moves</span></span> <span class="w"><span style="--i:3">the</span></span> <span class="w"><span style="--i:4">echo.</span></span></h2>
+            <p>As the chest rises and falls, the echo shifts by a fraction of a millimeter. Echo turns that shift into breaths.</p>
+          </article>
+          <article class="panel">
+            <h2><span class="w"><span style="--i:0">It</span></span> <span class="w"><span style="--i:1">records</span></span> <span class="w"><span style="--i:2">only</span></span> <span class="w"><span style="--i:3">what</span></span> <span class="w"><span style="--i:4">it</span></span> <span class="w"><span style="--i:5">can</span></span> <span class="w"><span style="--i:6">see</span></span> <span class="w"><span style="--i:7">clearly.</span></span></h2>
+            <p>If they roll away or a blanket blocks the sound, Echo stops recording instead of guessing. Pauses of 10 seconds or more are logged.</p>
+          </article>
+        </div>
+        <div class="hzdots" aria-hidden="true"><i></i><i></i><i></i></div>
+      </div>
     </section>
-    <section class="scene" data-shape="2">
-      <h2 class="reveal">Every breath moves the echo.</h2>
-      <p class="reveal">As the chest rises and falls, the echo shifts by a fraction of a millimeter. Echo turns that shift into breaths.</p>
+    <section class="marq" aria-hidden="true">
+      <div class="mq" id="mq1"><span>breathe in</span><b></b><span>breathe out</span><b></b><span>breathe in</span><b></b><span>breathe out</span><b></b><span>breathe in</span><b></b><span>breathe out</span><b></b></div>
+      <div class="mq alt" id="mq2"><span>all night long</span><b></b><span>while they sleep</span><b></b><span>all night long</span><b></b><span>while they sleep</span><b></b><span>all night long</span><b></b></div>
     </section>
-    <section class="scene" data-shape="3">
-      <h2 class="reveal">It records only what it can see clearly.</h2>
-      <p class="reveal">If they roll away or a blanket blocks the sound, Echo stops recording instead of guessing. Pauses of 10 seconds or more are logged.</p>
-    </section>
-    <section class="scene" data-shape="4">
-      <h2 class="reveal">In the morning, a report for the family.</h2>
-      <p class="reveal">Breathing rate, pauses, and how last night compares with their normal, ready to share with family or a doctor.</p>
-      <div class="reveal"><button class="btn" id="introGo">Set up tonight</button>
-      <p class="fineprint">A student project, not a medical device.</p></div>
+    <section class="morn" id="iMorn">
+      <div class="mornpin">
+        <h2><span class="w"><span style="--i:0">In</span></span> <span class="w"><span style="--i:1">the</span></span> <span class="w"><span style="--i:2">morning,</span></span> <span class="w"><span style="--i:3">a</span></span> <span class="w"><span style="--i:4">report</span></span> <span class="w"><span style="--i:5">for</span></span> <span class="w"><span style="--i:6">the</span></span> <span class="w"><span style="--i:7">family.</span></span></h2>
+        <p>Breathing rate, pauses, and how last night compares with their normal, ready to share with family or a doctor.</p>
+        <button class="btn" id="introGo">Set up tonight</button>
+        <p class="fineprint">A student project, not a medical device.</p>
+      </div>
     </section>
   </div>
 </div>
@@ -278,20 +409,51 @@
   <section class="view active" id="view-tonight">
 
     <div id="tIdle">
-      <div class="hero" aria-hidden="true"><span class="ring"></span><span class="ring"></span><span class="ring"></span><span class="orb"></span></div>
-      <h1>Tonight</h1>
-      <p class="sub">Echo records breathing overnight with sound you can't hear, for a morning report. No camera, nothing to wear, and nothing to sign up for.</p>
-      <div class="card">
-        <ol class="steps">
-          <li><div><b>Plug in the phone.</b> Echo keeps the screen on all night.</div></li>
-          <li><div><b>Works best for side sleepers.</b> Put the phone on the nightstand at mattress height, about 30–50 cm away, with the bottom edge facing the person's chest. Sonar reflects off the body like a mirror, so the phone has to face the chest straight on.</div></li>
-          <li><div><b>Turn the phone's volume up</b> and take out any earbuds.</div></li>
-          <li><div><b>Tap Start.</b> Echo tunes itself, then records only while it can clearly see breathing. If the person rolls away or a thick blanket blocks it, Echo pauses recording instead of guessing.</div></li>
-        </ol>
+      <header class="greet">
+        <div><p class="hello" id="hello">Good evening</p><h1>Tonight</h1></div>
+        <button class="howpill" id="howBtn">How it works</button>
+      </header>
+      <div class="arch" aria-hidden="true">
+        <svg viewBox="0 0 340 280" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1F504C"/><stop offset="1" stop-color="#112F2C"/></linearGradient>
+            <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#173F3C"/><stop offset=".7" stop-color="#3D6B63"/><stop offset="1" stop-color="#E5A48A"/></linearGradient>
+            <radialGradient id="gLamp" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F3C98F" stop-opacity=".45"/><stop offset="1" stop-color="#F3C98F" stop-opacity="0"/></radialGradient>
+            <linearGradient id="gBlanket" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B9DFD8"/><stop offset="1" stop-color="#7FBDB3"/></linearGradient>
+          </defs>
+          <rect width="340" height="280" fill="url(#gWall)"/>
+          <circle cx="250" cy="86" r="50" fill="url(#gSky)"/>
+          <g fill="#F3E6D0"><circle class="star" cx="226" cy="64" r="1.6"/><circle class="star s2" cx="272" cy="58" r="1.2"/><circle class="star s3" cx="238" cy="100" r="1"/><circle class="star" cx="284" cy="92" r="1.3"/><circle class="star s2" cx="58" cy="44" r="1.2"/><circle class="star s3" cx="120" cy="30" r="1"/><circle class="star" cx="170" cy="62" r="1.1"/></g>
+          <path d="M262 62a20 20 0 1 0 14 34a16 16 0 1 1 -14 -34z" fill="#F7E9CF"/>
+          <circle cx="250" cy="86" r="50" fill="none" stroke="#C9A97E" stroke-width="5"/>
+          <path d="M250 36v100M200 86h100" stroke="#C9A97E" stroke-width="3"/>
+          <circle cx="78" cy="176" r="70" fill="url(#gLamp)"/>
+          <rect y="244" width="340" height="36" fill="#0C2522"/>
+          <rect x="40" y="198" width="66" height="50" rx="6" fill="#A8845A"/><rect x="46" y="214" width="54" height="3" rx="1.5" fill="#8A6534"/>
+          <path d="M62 198v-30" stroke="#C9A97E" stroke-width="3"/><path d="M50 168h24l-5 -16h-14z" fill="#F3D3A2"/>
+          <rect x="84" y="180" width="11" height="18" rx="2.5" fill="#F3E6D0"/><rect x="86" y="182" width="7" height="12" rx="1" fill="#A9D6CF"/>
+          <g fill="none" stroke="#E8776B" stroke-width="2.4" stroke-linecap="round"><path class="arc a1" d="M102 182q6 7 0 14"/><path class="arc a2" d="M110 176q10 13 0 26"/><path class="arc a3" d="M118 170q14 19 0 38"/></g>
+          <rect x="126" y="160" width="12" height="88" rx="4" fill="#C9A97E"/>
+          <rect x="126" y="214" width="208" height="20" rx="6" fill="#EADCC6"/>
+          <rect x="138" y="232" width="8" height="14" fill="#A8845A"/><rect x="318" y="232" width="8" height="14" fill="#A8845A"/>
+          <ellipse cx="164" cy="208" rx="24" ry="8" fill="#F7EFE2"/>
+          <circle cx="158" cy="195" r="13" fill="#E9C2A6"/><path d="M146 193a13 13 0 0 1 24 -6c-6 -1 -13 1 -18 6z" fill="#5A3B2A"/>
+          <path class="chest" d="M168 216c4 -22 22 -30 40 -28c22 2 30 14 52 14c22 0 40 -6 64 4v10z" fill="url(#gBlanket)"/>
+        </svg>
       </div>
-      <button class="btn" id="startBtn">Start tonight</button>
+      <button class="btn start" id="startBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>Start tonight</button>
       <p class="hint" id="idleMsg"></p>
-      <p style="text-align:center;margin:14px 0 0"><button class="linkbtn" id="howBtn">How Echo works</button></p>
+      <div class="sechead"><h2>Before you start</h2><span id="railCount">Swipe for all 4</span></div>
+      <div class="rail" id="stepsRail">
+        <article class="stepcard c1"><div class="art"><span class="n">1</span><svg viewBox="0 0 48 48"><path d="M18 6v10M30 6v10M14 16h20v8a10 10 0 0 1 -20 0zM24 34v8"/></svg></div>
+          <h3>Plug in the phone</h3><p>Echo keeps the screen on all night, so it needs power.</p></article>
+        <article class="stepcard c2"><div class="art"><span class="n">2</span><svg viewBox="0 0 48 48"><rect x="6" y="14" width="12" height="20" rx="2.5"/><path d="M23 19q4 5 0 10M28 15q7 9 0 18M33 11q10 13 0 26"/></svg></div>
+          <h3>Face the chest, side sleepers</h3><p>Nightstand at mattress height, 30–50 cm away, bottom edge pointing at the chest. The sound bounces like light off a mirror, so aim straight on.</p></article>
+        <article class="stepcard c3"><div class="art"><span class="n">3</span><svg viewBox="0 0 48 48"><path d="M8 19h7l9 -8v26l-9 -8h-7z"/><path d="M30 18q4 6 0 12M35 14q8 10 0 20"/></svg></div>
+          <h3>Volume up, earbuds out</h3><p>The tone plays through the speaker. You won't hear it, but the phone needs to.</p></article>
+        <article class="stepcard c4"><div class="art"><span class="n">4</span><svg viewBox="0 0 48 48"><path d="M38 29A15 15 0 0 1 19 10a15 15 0 1 0 19 19z"/></svg></div>
+          <h3>Tap Start and leave it</h3><p>Echo tunes itself, then records only while it can clearly see breathing. If they roll away, it waits instead of guessing.</p></article>
+      </div>
     </div>
 
     <div id="tCalib" style="display:none">
@@ -304,17 +466,17 @@
     </div>
 
     <div id="tWatch" style="display:none">
-      <div class="status" id="statusPill"><span class="dot"></span><span id="statusText">Waiting for breathing</span></div>
-      <div class="big"><div class="num idle" id="bpm">--</div><div class="unit">breaths<br>per minute</div></div>
-      <canvas id="wave"></canvas>
+      <div class="live">
+        <div class="status" id="statusPill"><span class="dot"></span><span id="statusText">Waiting for breathing</span></div>
+        <div class="big"><div class="num idle" id="bpm">--</div><div class="unit">breaths<br>per minute</div></div>
+        <canvas id="wave"></canvas>
+      </div>
       <div class="countdown" id="countdown"></div>
-      <div class="card" style="margin-top:12px">
-        <div class="meta" style="margin-top:0">
-          <div><div class="k">Signal</div><div class="v"><span class="bars" id="bars"><i></i><i></i><i></i><i></i></span></div></div>
-          <div><div class="k">Breathing seen</div><div class="v" id="seenV">—</div></div>
-          <div><div class="k">Pauses logged</div><div class="v" id="pausesV">0</div></div>
-          <div><div class="k">Pattern</div><div class="v" id="patternV">—</div></div>
-        </div>
+      <div class="mtiles">
+        <div class="mt t-teal"><span class="mi"><svg viewBox="0 0 24 24"><path d="M5 18v-3M10 18v-6M15 18v-9M20 18V6"/></svg></span><div class="k">Signal</div><div class="v"><span class="bars" id="bars"><i></i><i></i><i></i><i></i></span></div></div>
+        <div class="mt t-sand"><span class="mi"><svg viewBox="0 0 24 24"><path d="M2 12s4 -7 10 -7s10 7 10 7s-4 7 -10 7s-10 -7 -10 -7z"/><circle cx="12" cy="12" r="3"/></svg></span><div class="k">Breathing seen</div><div class="v" id="seenV">—</div></div>
+        <div class="mt t-coral"><span class="mi"><svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></span><div class="k">Pauses logged</div><div class="v" id="pausesV">0</div></div>
+        <div class="mt t-paper"><span class="mi"><svg viewBox="0 0 24 24"><path d="M2 12c2 0 2 -5 4 -5s2 10 4 10s2 -10 4 -10s2 10 4 10s2 -5 4 -5"/></svg></span><div class="k">Pattern</div><div class="v" id="patternV">—</div></div>
       </div>
       <div class="card testpanel" id="testPanel">
         <h2>Test panel</h2>
@@ -361,7 +523,7 @@
     <h1>Settings</h1>
     <p class="sub">Saved on this phone only.</p>
     <div class="card">
-      <h2>Alerts (experimental)</h2>
+      <h2><span class="gi gi-coral"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg></span>Alerts (experimental)</h2>
       <div class="field switch">
         <label for="alertSw" style="margin:0">Sound an alarm if breathing seems to stop</label>
         <input type="checkbox" id="alertSw">
@@ -380,6 +542,7 @@
       </div>
     </div>
     <div class="card">
+      <h2><span class="gi gi-teal"><svg viewBox="0 0 24 24"><path d="M2 12c2 0 2 -5 4 -5s2 10 4 10s2 -10 4 -10s2 10 4 10s2 -5 4 -5"/></svg></span>Recording</h2>
       <div class="field">
         <label>Tone strength</label>
         <div class="seg" id="volSeg"><button data-v="normal">Normal</button><button data-v="high">High</button></div>
@@ -398,13 +561,13 @@
       <div class="help" style="margin-top:-8px">Shows a test panel on the Tonight screen for distance and blanket tests.</div>
     </div>
     <div class="card">
-      <h2>Family contact</h2>
+      <h2><span class="gi gi-sand"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c1 -4 4 -6 8 -6s7 2 8 6"/></svg></span>Family contact</h2>
       <div class="field"><label for="cName">Name</label><input type="text" id="cName" placeholder="e.g. Mom" autocomplete="off"></div>
       <div class="field"><label for="cPhone">Phone number</label><input type="tel" id="cPhone" placeholder="(555) 123-4567" autocomplete="off">
         <div class="help">The alarm screen shows a button to call this person.</div></div>
     </div>
     <div class="card">
-      <h2>Tone</h2>
+      <h2><span class="gi gi-deep"><svg viewBox="0 0 24 24"><path d="M5 10h3l5 -4v12l-5 -4h-3z"/><path d="M16 9q3 3 0 6M19 6q6 6 0 12"/></svg></span>Tone</h2>
       <div class="field">
         <label>Tone</label>
         <div class="seg" id="toneSeg"><button data-v="auto">Auto-tune</button><button data-v="16600">Fixed 16.6 kHz</button></div>
@@ -493,7 +656,11 @@
     if (quiet) return;
     wraps.forEach(w => w.classList.add('wipe'));
     requestAnimationFrame(() => requestAnimationFrame(() => wraps.forEach(w => w.classList.remove('wipe'))));
-    root.querySelectorAll('.tiles .v').forEach(el => {
+    root.querySelectorAll('.ringw .fg').forEach(c => {
+      c.style.transition = 'none'; c.style.strokeDashoffset = c.dataset.full;
+      requestAnimationFrame(() => requestAnimationFrame(() => { c.style.transition = ''; c.style.strokeDashoffset = c.dataset.off; }));
+    });
+    root.querySelectorAll('.tiles .v, .hnum, .badge .bn, .mt .v, .ringw .lab b').forEach(el => {
       const t = el.firstChild;
       if (!t || t.nodeType !== 3) return;
       const m = t.nodeValue.match(/^(\D*)(\d+(?:\.\d+)?)(.*)$/s);
@@ -859,7 +1026,7 @@
       const x = ((k + off) / (WAVE_N - 1)) * w, y = h - ((sm[k] - mn) / rng) * (h - 20) - 10;
       k ? waveCtx.lineTo(x, y) : waveCtx.moveTo(x, y);
     }
-    waveCtx.strokeStyle = alarmOn ? '#D4574B' : '#2A7D76'; waveCtx.lineWidth = 2.5; waveCtx.lineJoin = 'round'; waveCtx.stroke();
+    waveCtx.strokeStyle = alarmOn ? '#F4A497' : '#A9D6CF'; waveCtx.lineWidth = 2.5; waveCtx.lineJoin = 'round'; waveCtx.stroke();
     if ($('night').classList.contains('show')) {
       const dot = $('nightDot');
       dot.style.opacity = (0.15 + 0.45 * lastNorm).toFixed(2);
@@ -1465,27 +1632,40 @@
     const s = all.find(x => x.id === selectedSessionId);
     const cmp = s.avgRate ? compareToNormal(s) : null;
     const longest = s.pauses.length ? Math.max(...s.pauses.map(p => p[1])) : 0;
-    const chips = all.slice(-10).reverse().map(x =>
-      '<button class="chip' + (x.id === s.id ? ' on' : '') + '" data-id="' + x.id + '">' + esc(fmtDay(x.start)) + (x.sample ? ' · sample' : x.sim ? ' · sim' : '') + '</button>').join('');
+    const days = all.slice(-14).map(x => {
+      const d = new Date(x.start);
+      return '<button class="chip day' + (x.id === s.id ? ' on' : '') + '" data-id="' + x.id + '" aria-label="' + esc(fmtDay(x.start)) + '">' +
+        '<span class="dow">' + d.toLocaleDateString(undefined, { weekday: 'short' }) + '</span><span class="dn">' + d.getDate() + '</span>' +
+        (x.sample ? '<i class="tag">sample</i>' : x.sim ? '<i class="tag">demo</i>' : '') + '</button>';
+    }).join('');
     let normalLine = (s.coverage ?? 1) < 0.5 ? 'Not compared (breathing seen less than half the night)' : 'Needs 3 earlier qualifying nights';
     if (cmp) normalLine = cmp.flagged ? '<span class="flagtxt">' + ICON_FLAG + 'Above normal</span> (' + (cmp.diff > 0 ? '+' : '') + cmp.diff + ' vs ' + cmp.base + ')' : 'Within normal (normal is ' + cmp.base + ')';
+    const seenPct = Math.round(100 * s.coverage), C2 = 2 * Math.PI * 46;
+    const cmpPill = cmp ? '<div class="cmp">' + (cmp.flagged ? ICON_FLAG + 'Above their normal of ' + cmp.base : ICON_OK + 'Within their normal') + '</div>' : '';
     root.innerHTML =
-      '<div class="chips">' + chips + '</div>' +
+      '<div class="days" id="dayStrip">' + days + '</div>' +
+      '<section class="dawn">' +
+        '<div class="when"><span>' + esc(fmtDay(s.start)) + (s.sample ? ' (sample)' : s.sim ? ' (demo)' : '') + '</span><span>' + esc(fmtTime(s.start)) + ' to ' + esc(fmtTime(s.start + s.durSec * 1000)) + '</span></div>' +
+        '<div class="main"><div><div class="k">Average breathing</div><div class="hnum">' + (s.avgRate ?? '—') + (s.avgRate ? '<small>/min</small>' : '') + '</div>' +
+          '<div class="k2">' + (s.lowRate ? 'Typical ' + s.lowRate + '–' + s.highRate + ' per minute' : 'No rate recorded') + '</div></div>' +
+          '<div class="ringw" role="img" aria-label="Breathing seen ' + seenPct + '% of the night"><svg viewBox="0 0 112 112"><circle class="bg" cx="56" cy="56" r="46" fill="none" stroke-width="10"/>' +
+          '<circle class="fg" cx="56" cy="56" r="46" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + C2.toFixed(1) + '" stroke-dashoffset="' + (C2 * (1 - s.coverage)).toFixed(1) + '" data-off="' + (C2 * (1 - s.coverage)).toFixed(1) + '" data-full="' + C2.toFixed(1) + '"/></svg>' +
+          '<div class="lab"><b>' + seenPct + '%</b><span>seen</span></div></div></div>' +
+        cmpPill +
+      '</section>' +
+      '<div class="duo">' +
+        '<div class="mt t-coral"><span class="mi"><svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></span><div class="k">Pauses of 10 s or more</div><div class="v">' + s.pauseCount + '</div></div>' +
+        '<div class="mt t-sand"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4"/></svg></span><div class="k">Longest pause</div><div class="v">' + (longest ? longest + '<small> s</small>' : 'None') + '</div></div>' +
+      '</div>' +
       '<div class="card">' +
-        '<h2>' + esc(fmtDay(s.start)) + ' · ' + esc(fmtTime(s.start)) + ' to ' + esc(fmtTime(s.start + s.durSec * 1000)) + (s.sample ? ' · sample data' : s.sim ? ' · simulation' : '') + '</h2>' +
-        '<div class="tiles">' +
-          '<div><div class="k">Average breathing</div><div class="v">' + (s.avgRate ?? '—') + '<small>' + (s.avgRate ? ' /min' : '') + '</small></div></div>' +
-          '<div><div class="k">Pauses ≥&nbsp;10&nbsp;s</div><div class="v">' + s.pauseCount + '</div></div>' +
-          '<div><div class="k">Breathing seen</div><div class="v">' + Math.round(100 * s.coverage) + '<small>%</small></div></div>' +
-        '</div>' +
         '<div class="charttitle">Breathing rate through the night</div>' +
         '<div class="chartwrap"><canvas id="nightChart" style="height:190px" aria-label="Breathing rate through the night"></canvas><div class="tip" id="nightTip"></div></div>' +
         '<div class="legend"><span><i class="lk line"></i>Breaths per minute</span><span><i class="lk pause"></i>Pause of 10 s or more</span></div>' +
+      '</div>' +
+      '<div class="card">' +
         '<div class="kv"><span>Length</span><span>' + fmtDur(s.minutes) + '</span></div>' +
         '<div class="kv"><span>Breathing seen</span><span>' + fmtDur(s.seenMin) + ' of ' + fmtDur(s.minutes) + '</span></div>' +
         (s.alarms ? '<div class="kv"><span>Alarms</span><span>' + s.alarms + '</span></div>' : '') +
-        '<div class="kv"><span>Typical range</span><span>' + (s.lowRate ? s.lowRate + '–' + s.highRate + ' /min' : '—') + '</span></div>' +
-        '<div class="kv"><span>Longest pause</span><span>' + (longest ? longest + ' s' : 'None') + '</span></div>' +
         '<div class="kv"><span>Waxing–waning pattern</span><span>' + (s.waxWane ? 'Seen' : 'Not seen') + '</span></div>' +
         '<div class="kv"><span>Compared with normal</span><span>' + normalLine + '</span></div>' +
         (s.pauses.length ? '<details><summary>Pause times</summary><table><tr><th>Time</th><th>Length</th><th>Alarm</th></tr>' +
@@ -1493,6 +1673,8 @@
       '</div>' +
       '<button class="btn" id="shareBtn">Share summary</button>' +
       '<p class="hint" id="shareMsg"></p>';
+    const strip = $('dayStrip'), onDay = strip.querySelector('.on');
+    if (onDay) strip.scrollLeft = onDay.offsetLeft - strip.clientWidth / 2 + onDay.offsetWidth / 2;
     root.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { selectedSessionId = +b.dataset.id; renderReports(); animateIn(root); }));
     $('shareBtn').addEventListener('click', () => shareSummary(s, cmp, longest));
     drawNightChart($('nightChart'), $('nightTip'), s);
@@ -1544,6 +1726,7 @@
     const last = nights[nights.length - 1];
     const cmp = compareToNormal(last);
     let status = '<div class="trendstatus ok">' + ICON_OK + 'Within normal</div><p>Last night\'s average was ' + last.avgRate + ' breaths/min. This person\'s normal is about ' + (cmp ? cmp.base : '—') + '.</p>';
+    const flagged = cmp && cmp.flagged;
     if (cmp && cmp.flagged) {
       status = '<div class="trendstatus flag">' + ICON_FLAG + (cmp.twoInRow ? 'Above normal 2 nights in a row' : 'Above normal last night') + '</div>' +
         '<p>Last night\'s average was ' + last.avgRate + ' breaths/min, ' + cmp.diff + ' above this person\'s normal of ' + cmp.base + '. ' +
@@ -1552,7 +1735,7 @@
     const recent = nights.slice(-7);
     const waxNights = recent.filter(n => n.waxWane).length;
     root.innerHTML =
-      '<div class="card">' + status + '</div>' +
+      '<section class="verdict ' + (flagged ? 'flag' : 'ok') + '"><div class="badge"><div class="bn">' + last.avgRate + '</div><div class="bl">last night</div></div><div>' + status + '</div></section>' +
       '<div class="card">' +
         '<div class="charttitle">Average breathing rate per night</div>' +
         '<div class="chartwrap"><canvas id="trendChart" style="height:180px" aria-label="Average breathing rate per night"></canvas><div class="tip" id="trendTip"></div></div>' +
@@ -1761,8 +1944,7 @@
   // ---------------------------------------------------------------------------
   const Intro = (() => {
     const el = $('intro'), sc = $('introScroll'), cvs = $('introGL');
-    let THREEp = null, gl = null, raf2 = 0, obs = null;
-    const NIGHT = [15, 38, 36], DUSK = [38, 66, 62], MORN = [245, 239, 228];
+    let THREEp = null, gl = null, raf2 = 0;
 
     function loadThree() {
       if (window.THREE) return Promise.resolve(window.THREE);
@@ -1895,18 +2077,44 @@
         gl_FragColor = vec4(mix(uColor, uAccent, vAcc), smoothstep(0.5, 0.1, d) * vAlpha * uOpacity);
       }`;
 
-    function mixc(a, b, k) { return a.map((v, i) => Math.round(v + (b[i] - v) * k)); }
-    function bgAt(p) {
-      if (p <= 2) return NIGHT;
-      if (p <= 3) return mixc(NIGHT, DUSK, p - 2);
-      return mixc(DUSK, MORN, Math.min(1, (p - 3) * 1.4));
+    // ---- scroll layout: hero -> 3 sideways panels -> marquee -> morning circle
+    const held = x => { const f = Math.floor(x); return f + smooth(x - f); };
+    function smooth(t) { const u = Math.max(0, Math.min(1, (t - 0.18) / 0.64)); return u * u * (3 - 2 * u); }
+    const clamp01 = v => Math.max(0, Math.min(1, v));
+    let lay = null;
+    function measure() {
+      const vh = sc.clientHeight, hz = $('iHz'), mo = $('iMorn');
+      lay = { vh, vw: sc.clientWidth, hzStart: hz.offsetTop, hzEnd: hz.offsetTop + hz.offsetHeight - vh,
+              moStart: mo.offsetTop - vh * 0.6, moEnd: mo.offsetTop + mo.offsetHeight - vh, max: sc.scrollHeight - vh };
     }
-    function progress() {
-      const secs = sc.querySelectorAll('.scene'), mid = sc.scrollTop + sc.clientHeight * 0.5;
-      const c = [...secs].map(s => s.offsetTop + s.offsetHeight * 0.5);
-      if (mid <= c[0]) return 0;
-      for (let i = 1; i < c.length; i++) if (mid < c[i]) return i - 1 + (mid - c[i - 1]) / (c[i] - c[i - 1]);
-      return c.length - 1;
+    let lastPanel = -1, mornOn = false;
+    // applies all scroll-linked layout and returns the particle progress (0..4) and morning amount (0..1)
+    function update() {
+      if (!lay) measure();
+      const y = sc.scrollTop, L = lay;
+      let p, panelX = 0;
+      if (y <= L.hzStart) p = smooth(clamp01(y / Math.max(1, L.hzStart)));
+      else if (y <= L.hzEnd) { const hp = (y - L.hzStart) / Math.max(1, L.hzEnd - L.hzStart) * 2; panelX = Math.min(2, held(hp)); p = 1 + panelX; }
+      else { panelX = 2; p = 3; }
+      const morning = smooth(clamp01((y - L.moStart) / Math.max(1, L.moEnd - L.moStart)));
+      p += morning;
+      $('hzTrack').style.transform = 'translate3d(' + (-panelX * L.vw).toFixed(1) + 'px,0,0)';
+      const panel = y < L.hzStart - L.vh * 0.25 ? -1 : Math.round(panelX);
+      if (panel !== lastPanel) {
+        lastPanel = panel;
+        document.querySelectorAll('#hzTrack .panel').forEach((el, i) => el.classList.toggle('on', i === panel));
+        document.querySelectorAll('.hzdots i').forEach((el, i) => el.classList.toggle('on', i === panel));
+      }
+      const mq = y * 0.45;
+      $('mq1').style.transform = 'translate3d(' + (-mq % 2000 + 200 - (y - L.hzEnd) * 0.25).toFixed(1) + 'px,0,0)';
+      $('mq2').style.transform = 'translate3d(' + (-1200 + (y - L.hzEnd) * 0.5).toFixed(1) + 'px,0,0)';
+      $('introMorning').style.clipPath = 'circle(' + (morning * 150).toFixed(2) + '% at 50% 32%)';
+      const on = morning > 0.55;
+      if (on !== mornOn) { mornOn = on; document.querySelector('.mornpin').classList.toggle('on', on); }
+      el.style.color = morning > 0.45 ? '#17504D' : '#F3E6D0';
+      $('introProg').style.transform = 'scaleX(' + (y / Math.max(1, L.max)).toFixed(3) + ')';
+      const mqTop = $('mq1').getBoundingClientRect(), dimBand = Math.abs((mqTop.top + mqTop.height) - L.vh * 0.32) < L.vh * 0.35 ? 1 : 0;
+      return { p, morning, dim: dimBand * (1 - morning) };
     }
 
     function build(THREE) {
@@ -1933,6 +2141,7 @@
       group.add(new THREE.Points(geo, mat)); scene.add(group);
       const cream = new THREE.Color('#F3E6D0'), teal = new THREE.Color('#17504D');
       function fit() {
+        measure();
         const w = cvs.clientWidth, h = cvs.clientHeight, asp = w / h;
         renderer.setSize(w, h, false); camera.aspect = asp; camera.updateProjectionMatrix();
         const d = Math.max(6.2, 3.9 / (0.63 * asp)); camera.position.set(0, 0, d);
@@ -1945,18 +2154,16 @@
       let prog = 0, lastTop = sc.scrollTop, vel = 0, last = performance.now();
       function frame(now) {
         const dt = Math.min(0.05, (now - last) / 1000); last = now;
-        const target = progress();
+        const st = update(), target = st.p;
         prog += (target - prog) * Math.min(1, dt * 5);
         vel += ((Math.abs(sc.scrollTop - lastTop) / Math.max(1, sc.clientHeight)) * 6 - vel) * Math.min(1, dt * 6); lastTop = sc.scrollTop;
         U.uProgress.value = prog; U.uTime.value = now / 1000; U.uVelocity.value = Math.min(0.6, vel);
-        U.uOpacity.value = Math.min(1, U.uOpacity.value + dt * 0.8);
-        const morning = Math.max(0, Math.min(1, (prog - 3) * 1.4));
-        U.uColor.value.copy(cream).lerp(teal, morning);
+        U.uOpacity.value += ((1 - 0.7 * st.dim) - U.uOpacity.value) * Math.min(1, dt * 2.5);
+        U.uColor.value.copy(cream).lerp(teal, st.morning);
         tilt.x += (tilt.tx - tilt.x) * 0.05; tilt.y += (tilt.ty - tilt.y) * 0.05;
         group.rotation.y = tilt.x * 0.5 + Math.sin(now / 4000) * 0.12 * (prog < 1 ? 1 : 0.3);
         group.rotation.x = tilt.y * 0.3;
         renderer.render(scene, camera);
-        paint(prog);
         raf2 = requestAnimationFrame(frame);
       }
       raf2 = requestAnimationFrame(frame);
@@ -1964,27 +2171,34 @@
         geo.dispose(); mat.dispose(); renderer.dispose(); try { renderer.forceContextLoss(); } catch (e) {} } };
     }
 
-    function paint(p) {
-      const bg = bgAt(p);
-      el.style.background = 'rgb(' + bg.join(',') + ')';
-      el.style.color = p > 3.45 ? '#17504D' : '#F3E6D0';
-      $('introProg').style.transform = 'scaleX(' + (p / 4).toFixed(3) + ')';
+    let fallbackLoop = 0, loaderTimer = 0;
+    function runLoader(ready) {
+      const L = $('introLoader'), num = $('lnum'), t0 = performance.now();
+      L.classList.remove('open', 'done'); num.textContent = '0';
+      const tick = now => {
+        const k = Math.min(1, (now - t0) / 1300), e = 1 - Math.pow(1 - k, 3);
+        num.textContent = Math.round(e * 100);
+        if (k < 1) { loaderTimer = requestAnimationFrame(tick); return; }
+        ready.then(() => {
+          L.classList.add('open'); $('iHero').classList.add('on');
+          setTimeout(() => L.classList.add('done'), 1200);
+        });
+      };
+      loaderTimer = requestAnimationFrame(tick);
     }
-
-    let fallbackLoop = 0;
     function open() {
       el.classList.remove('gone'); sc.scrollTop = 0; document.body.style.overflow = 'hidden';
-      obs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }), { root: sc, threshold: 0.3 });
-      sc.querySelectorAll('.scene').forEach(s => { s.classList.remove('in'); obs.observe(s); });
+      lay = null; lastPanel = -1; mornOn = false; $('iHero').classList.remove('on');
+      document.querySelectorAll('#hzTrack .panel, .mornpin').forEach(x => x.classList.remove('on'));
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const fallback = () => { const f = () => { paint(progress()); fallbackLoop = requestAnimationFrame(f); }; f(); };
-      if (reduce) return fallback();
-      loadThree().then(T => { if (el.classList.contains('gone')) return; gl = build(T); if (!gl) fallback(); }).catch(fallback);
+      const fallback = () => { const f = () => { update(); fallbackLoop = requestAnimationFrame(f); }; f(); };
+      if (reduce) { $('introLoader').classList.add('done'); $('iHero').classList.add('on'); return fallback(); }
+      const ready = loadThree().then(T => { if (el.classList.contains('gone')) return; gl = build(T); if (!gl) fallback(); }).catch(fallback);
+      runLoader(Promise.race([ready, new Promise(r => setTimeout(r, 2500))]));
     }
     function close() {
       if (gl) { gl.dispose(); gl = null; }
-      cancelAnimationFrame(fallbackLoop);
-      if (obs) { obs.disconnect(); obs = null; }
+      cancelAnimationFrame(fallbackLoop); cancelAnimationFrame(loaderTimer);
       el.classList.add('gone'); document.body.style.overflow = '';
       store.set('introSeen', true);
     }
@@ -1993,6 +2207,13 @@
     $('howBtn').addEventListener('click', () => { if (!running) open(); });
     return { open, close };
   })();
+  // greeting by time of day, and "2 of 4" on the setup cards
+  function greet() { const h = new Date().getHours(); $('hello').textContent = h < 5 ? 'Late night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
+  greet(); setInterval(() => { if (!running) greet(); }, 60000);
+  $('stepsRail').addEventListener('scroll', () => {
+    const r = $('stepsRail'), cards = r.children, w = cards[0].offsetWidth + 12;
+    $('railCount').textContent = (Math.min(cards.length - 1, Math.round(r.scrollLeft / w)) + 1) + ' of ' + cards.length;
+  }, { passive: true });
   if (params.get('intro') || (!store.get('introSeen', false) && !params.get('sim') && !navigator.webdriver)) Intro.open();
 })();
 </script>
