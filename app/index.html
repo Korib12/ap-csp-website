@@ -118,6 +118,19 @@
   .fine { font-size: 12px; color: var(--faint); line-height: 1.55; margin: 18px 4px 0; }
   .fine a { color: var(--dim); }
 
+  /* ---------- Test panel ---------- */
+  .testpanel { display: none; border-color: rgba(240,180,90,0.4); }
+  .testpanel.show { display: block; }
+  .tgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .tgrid label { font-size: 11px; color: var(--dim); display: flex; flex-direction: column; gap: 4px; }
+  .tgrid select { background: var(--bg); color: var(--ink); border: 1px solid var(--edge); border-radius: 10px; padding: 10px; font-size: 15px; font-family: inherit; }
+  .tlive { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  .tlive .k { font-size: 11px; color: var(--dim); margin-bottom: 3px; }
+  .tlive .v { font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .clar-strong { color: var(--breath); } .clar-ok { color: var(--amber); } .clar-weak { color: var(--alarm); }
+  #tTable table { font-size: 12px; }
+  #tTable .row { margin-top: 10px; }
+
   /* ---------- Reports & Trends ---------- */
   .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
@@ -177,7 +190,7 @@
       <div class="card">
         <ol class="steps">
           <li><div><b>Plug in the phone.</b> Echo keeps the screen on all night.</div></li>
-          <li><div><b>Prop it on the bed, next to the pillow,</b> about 30 cm from the chest, with the bottom edge pointing at the person.</div></li>
+          <li><div><b>Prop it on the bed, next to the pillow,</b> about 30 cm away, with the bottom edge pointing at the chest or belly. When someone lies down, the belly usually moves more than the chest.</div></li>
           <li><div><b>Turn the phone's volume up</b> and take out any earbuds.</div></li>
           <li><div><b>Tap Start.</b> Echo tunes itself in a few seconds, then watches quietly.</div></li>
         </ol>
@@ -206,6 +219,23 @@
           <div><div class="k">Pattern</div><div class="v" id="patternV">—</div></div>
           <div><div class="k">Pauses tonight</div><div class="v" id="pausesV">0</div></div>
         </div>
+      </div>
+      <div class="card testpanel" id="testPanel">
+        <h2>Test panel</h2>
+        <div class="tgrid">
+          <label>Distance<select id="tDist"><option>20 cm</option><option>40 cm</option><option>60 cm</option><option>90 cm</option></select></label>
+          <label>Covering<select id="tCover"><option>T-shirt</option><option>Tight hoodie</option><option>Loose hoodie</option><option>Thin blanket</option><option>Thick comforter</option></select></label>
+          <label>Your pace<select id="tPace"><option>10 /min</option><option selected>15 /min</option><option>30 /min</option><option>Normal</option></select></label>
+          <label>Position<select id="tPos"><option>Lying down</option><option>Sitting</option></select></label>
+        </div>
+        <div class="tlive">
+          <div><div class="k">Rate (last 30 s)</div><div class="v" id="tRate">—</div></div>
+          <div><div class="k">Breath clarity</div><div class="v" id="tClar">—</div></div>
+          <div><div class="k">Tone signal</div><div class="v" id="tPeak">—</div></div>
+        </div>
+        <button class="btn" id="tSave">Save result</button>
+        <p class="hint" id="tMsg">Breathe at your pace for at least 40 seconds before saving.</p>
+        <div id="tTable"></div>
       </div>
       <div class="row">
         <button class="btn secondary" id="nightBtn">Night screen</button>
@@ -245,6 +275,18 @@
         <label for="soundSw" style="margin:0">Alarm sound</label>
         <input type="checkbox" id="soundSw" checked>
       </div>
+    </div>
+    <div class="card">
+      <div class="field">
+        <label>Tone strength</label>
+        <div class="seg" id="volSeg"><button data-v="normal">Normal</button><button data-v="high">High</button></div>
+        <div class="help">High sends a stronger tone, which helps at longer distances and through blankets. It may be faintly audible to some people. Applies the next time you start.</div>
+      </div>
+      <div class="field switch">
+        <label for="testSw" style="margin:0">Testing tools</label>
+        <input type="checkbox" id="testSw">
+      </div>
+      <div class="help" style="margin-top:-8px">Shows a test panel on the Tonight screen for distance and blanket tests.</div>
     </div>
     <div class="card">
       <h2>Family contact</h2>
@@ -302,7 +344,9 @@
     pauseSec: store.get('pauseSec', 20),
     sound: store.get('sound', true),
     cName: store.get('cName', ''),
-    cPhone: store.get('cPhone', '')
+    cPhone: store.get('cPhone', ''),
+    vol: store.get('vol', 'high'),
+    testing: store.get('testing', false)
   };
 
   // ---------------------------------------------------------------------------
@@ -323,6 +367,7 @@
   const SLOW_HZ = 10;                 // slow (I, Q) samples per second
   const N = SLOW_HZ * 240;            // keep 4 minutes
   const WAVE_N = SLOW_HZ * 30;        // the live wave shows the last 30 s
+  const RATE_WIN_S = 40;             // breathing rate uses the last 40 s (was 28) for more averaging
   let ringI = new Float32Array(N), ringQ = new Float32Array(N);
   let ringFilled = 0, ringHead = 0;
   let audioCtx = null, osc = null, gain = null, analyser = null, micStream = null, srcNode = null, proc = null, sink = null;
@@ -561,7 +606,7 @@
   // 0.08–0.6 Hz (5–36 breaths/min), using the most recent ~28 s.
   function estimateRate() {
     if (ringFilled < SLOW_HZ * 20) return null;
-    const M = Math.min(ringFilled, SLOW_HZ * 28);
+    const M = Math.min(ringFilled, SLOW_HZ * RATE_WIN_S);
     const x = displacement(M);
     for (let k = 0; k < M; k++) x[k] *= 0.5 - 0.5*Math.cos(2*Math.PI*k/(M-1)); // Hann
     const fLo = 0.08, fHi = 0.6, steps = 130;
@@ -676,6 +721,7 @@
   function updateRate() {
     if (!toneLocked) return;
     const est = estimateRate();
+    if (est && settings.testing) feedTest(est);
     if (!est || est.bpm < 5 || est.bpm > 35 || !armed) return;
     if (lastBreathAgo > 10) { $('bpm').textContent = '--'; $('bpm').classList.add('idle'); return; }
     $('bpm').textContent = Math.round(est.bpm);
@@ -806,7 +852,7 @@
   setInterval(() => {
     if ($('night').classList.contains('show')) updateClock();
     const onTonight = $('view-tonight').classList.contains('active');
-    if (running && !alarmOn && onTonight && Date.now() - lastActivity > 20000) showNight();
+    if (running && !alarmOn && onTonight && !settings.testing && Date.now() - lastActivity > 20000) showNight();
   }, 1000);
 
   // ---------------------------------------------------------------------------
@@ -888,7 +934,7 @@
       binHz = sampleRate / analyser.fftSize;
       srcNode.connect(analyser);
       osc = audioCtx.createOscillator(); gain = audioCtx.createGain();
-      osc.type = 'sine'; osc.frequency.value = 16600; gain.gain.value = 0.45;
+      osc.type = 'sine'; osc.frequency.value = 16600; gain.gain.value = settings.vol === 'high' ? 0.9 : 0.45;
       osc.connect(gain); gain.connect(audioCtx.destination); osc.start();
       if (audioCtx.state === 'suspended') await audioCtx.resume();
 
@@ -917,7 +963,7 @@
     resetBuffer();
     running = true; alarmOn = false;
     sessionLog = { start: Date.now(), timeline: [], pauses: [], alarms: 0, waxWane: false };
-    everArmed = false; curPause = null; sessTicks = 0; winRates = [];
+    everArmed = false; curPause = null; sessTicks = 0; winRates = []; tRates = []; tClars = [];
     $('pausesV').textContent = '0'; $('patternV').textContent = '—';
     $('bpm').textContent = '--'; $('bpm').classList.add('idle');
     show('tWatch'); sizeWave(); setStatus('wait', 'Getting ready');
@@ -1360,6 +1406,47 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Test panel: record rate, breath clarity and tone signal for each condition
+  // ---------------------------------------------------------------------------
+  let tRates = [], tClars = [];
+  function clarityWord(c) { return c >= 12 ? ['Strong', 'clar-strong'] : c >= 6 ? ['OK', 'clar-ok'] : ['Weak', 'clar-weak']; }
+  function feedTest(est) {
+    tRates.push(est.bpm); tClars.push(est.prominence);
+    if (tRates.length > 60) { tRates.shift(); tClars.shift(); }   // last 30 s (2 per second)
+    const r = median(tRates), c = median(tClars), [word, cls] = clarityWord(c);
+    $('tRate').textContent = Math.round(r) + ' /min';
+    $('tClar').innerHTML = '<span class="' + cls + '">' + word + '</span> <small style="color:var(--faint);font-weight:500">' + c.toFixed(0) + '</small>';
+    $('tPeak').textContent = carrierPeak;
+  }
+  function renderTests() {
+    const rows = store.get('tests', []);
+    if (!rows.length) { $('tTable').innerHTML = ''; return; }
+    $('tTable').innerHTML = '<table><tr><th>Dist</th><th>Covering</th><th>Pace</th><th>Read</th><th>Clarity</th></tr>' +
+      rows.map(t => '<tr><td>' + t.dist + '</td><td>' + t.cover + '</td><td>' + t.pace + '</td><td>' + t.rate + '</td><td>' + t.clarity + '</td></tr>').join('') +
+      '</table><div class="row"><button class="btn secondary" id="tCopy">Copy results</button><button class="btn secondary" id="tClear">Clear</button></div>';
+    $('tCopy').onclick = async () => {
+      const head = 'Echo distance and blanket tests\nDistance | Covering | Position | Real pace | Echo reading | Error | Breath clarity | Tone signal | Tone | Strength | Time';
+      const body = rows.map(t => [t.dist, t.cover, t.pos, t.pace, t.rate, t.err, t.clarity + ' (' + t.clarNum + ')', t.peak, t.tone, t.vol, new Date(t.at).toLocaleString()].join(' | ')).join('\n');
+      try { await navigator.clipboard.writeText(head + '\n' + body); $('tMsg').textContent = 'Copied. Paste it into your notes or here.'; }
+      catch (e) { $('tTable').insertAdjacentHTML('beforeend', '<textarea class="sharebox" readonly>' + esc(head + '\n' + body) + '</textarea>'); }
+    };
+    $('tClear').onclick = () => { if (confirm('Delete all saved test results?')) { store.set('tests', []); renderTests(); } };
+  }
+  $('tSave').addEventListener('click', () => {
+    if (tRates.length < 20) { $('tMsg').textContent = 'Not enough readings yet. Keep breathing at your pace a bit longer.'; return; }
+    const rate = Math.round(median(tRates)), c = median(tClars), pace = $('tPace').value;
+    const paceNum = parseInt(pace, 10);
+    const row = { at: Date.now(), dist: $('tDist').value, cover: $('tCover').value, pos: $('tPos').value, pace,
+      rate, err: isNaN(paceNum) ? '—' : (rate - paceNum > 0 ? '+' : '') + (rate - paceNum), clarity: clarityWord(c)[0], clarNum: Math.round(c),
+      peak: carrierPeak, tone: (demodFreq / 1000).toFixed(1) + ' kHz', vol: settings.vol };
+    const rows = store.get('tests', []); rows.push(row); store.set('tests', rows);
+    $('tMsg').textContent = 'Saved: ' + row.dist + ', ' + row.cover + ', read ' + rate + ' /min.';
+    tRates = []; tClars = [];
+    renderTests();
+  });
+  function applyTesting() { $('testPanel').classList.toggle('show', !!settings.testing); if (settings.testing) renderTests(); }
+
+  // ---------------------------------------------------------------------------
   // Settings UI
   // ---------------------------------------------------------------------------
   document.querySelectorAll('#pauseSeg button').forEach(b => {
@@ -1369,6 +1456,16 @@
       document.querySelectorAll('#pauseSeg button').forEach(x => x.classList.toggle('on', x === b));
     });
   });
+  document.querySelectorAll('#volSeg button').forEach(b => {
+    b.classList.toggle('on', b.dataset.v === settings.vol);
+    b.addEventListener('click', () => {
+      settings.vol = b.dataset.v; store.set('vol', settings.vol);
+      document.querySelectorAll('#volSeg button').forEach(x => x.classList.toggle('on', x === b));
+    });
+  });
+  $('testSw').checked = !!settings.testing;
+  $('testSw').addEventListener('change', e => { settings.testing = e.target.checked; store.set('testing', settings.testing); applyTesting(); });
+  applyTesting();
   $('soundSw').checked = settings.sound;
   $('soundSw').addEventListener('change', e => { settings.sound = e.target.checked; store.set('sound', settings.sound); });
   $('cName').value = settings.cName; $('cPhone').value = settings.cPhone;
