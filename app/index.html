@@ -174,7 +174,7 @@
   .tgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
   .tgrid label { font-size: 12px; color: var(--dim); display: flex; flex-direction: column; gap: 4px; }
   .tgrid select { background: var(--bg); color: var(--ink); border: 1px solid var(--edge); border-radius: 12px; padding: 10px; font-size: 15px; font-family: inherit; }
-  .tlive { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  .tlive { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
   .tlive .k { font-size: 12px; color: var(--dim); margin-bottom: 3px; }
   .tlive .v { font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
   .clar-strong { color: var(--breath); } .clar-ok { color: var(--amber); } .clar-weak { color: var(--alarm); }
@@ -491,8 +491,10 @@
           <div><div class="k">Rate (last 30 s)</div><div class="v" id="tRate">—</div></div>
           <div><div class="k">Breath clarity</div><div class="v" id="tClar">—</div></div>
           <div><div class="k">Tone signal</div><div class="v" id="tPeak">—</div></div>
+          <div><div class="k">Motion vs noise</div><div class="v" id="tBand">—</div></div>
         </div>
         <button class="btn" id="tSave">Save result</button>
+        <button class="btn secondary" id="tRaw" style="margin-top:8px">Save raw recording (last 4 min)</button>
         <p class="hint" id="tMsg">Breathe at your pace for at least 40 seconds before saving.</p>
         <div id="tTable"></div>
       </div>
@@ -698,6 +700,14 @@
   const CLAR_MIN = 6;               // breath clarity needed to count breathing as clearly seen
   const SNR_MIN = 12;               // breath size vs leftover jitter (steady breathing scores ~30, irregular 13–22 in simulation)
   let lastSNR = 0;
+  // Absolute check (added after the empty-room test): the other checks only compare the
+  // signal with itself, so they also "find" breathing in pure noise. Band SNR compares
+  // motion in the breathing band (6-42 /min) with the phone's own noise floor (90-270 /min)
+  // in the raw echo. Pure noise scores about 1; a breathing chest scores far higher.
+  const BAND_MIN = 6;
+  const ENTER_SEC = 8;              // breathing must look good this long before recording starts
+  const PAUSE_AFTER_SEC = 20;       // a pause only counts after this much clearly seen breathing
+  let lastBand = 0, goodStreak = 0, seeStreak = 0;
   let lastActivity = Date.now();
 
   function resetBuffer() {
@@ -921,6 +931,33 @@
   }
   
   
+  // Band SNR on the raw (I, Q) echo over the last 30 s (see BAND_MIN).
+  function bandSNR() {
+    const M = Math.min(ringFilled, SLOW_HZ * 30);
+    if (M < SLOW_HZ * 15) return 0;
+    const I = new Float64Array(M), Q = new Float64Array(M);
+    for (let k = 0; k < M; k++) { const idx = (ringHead - M + k + N) % N; I[k] = ringI[idx]; Q[k] = ringQ[idx]; }
+    // remove a straight-line trend (slow drift), then taper the ends
+    for (const x of [I, Q]) {
+      let sx = 0, sy = 0, sxx = 0, sxy = 0;
+      for (let k = 0; k < M; k++) { sx += k; sy += x[k]; sxx += k * k; sxy += k * x[k]; }
+      const b = (M * sxy - sx * sy) / (M * sxx - sx * sx), a = (sy - b * sx) / M;
+      for (let k = 0; k < M; k++) x[k] = (x[k] - a - b * k) * (0.5 - 0.5 * Math.cos(2 * Math.PI * k / (M - 1)));
+    }
+    const pw = f => {   // power of the complex echo at frequency f (Hz, can be negative)
+      let re = 0, im = 0;
+      for (let k = 0; k < M; k++) {
+        const ph = 2 * Math.PI * f * k / SLOW_HZ, c = Math.cos(ph), sn = Math.sin(ph);
+        re += I[k] * c + Q[k] * sn; im += Q[k] * c - I[k] * sn;
+      }
+      return re * re + im * im;
+    };
+    let pin = 0, nin = 0, phi = 0, nhi = 0;
+    for (let f = 0.1; f <= 0.7001; f += 0.025) { pin += pw(f) + pw(-f); nin += 2; }
+    for (let f = 1.5; f <= 4.5001; f += 0.1) { phi += pw(f) + pw(-f); nhi += 2; }
+    return phi > 0 ? (pin / nin) / (phi / nhi) : 0;
+  }
+
   // Breathing rate = strongest frequency of the displacement signal in
   // 0.08–0.6 Hz (5–36 breaths/min), using the most recent ~28 s.
   function estimateRate() {
@@ -1046,7 +1083,7 @@
     if (monState !== 'seeing' || est.bpm < 5 || est.bpm > 35) { $('bpm').textContent = '--'; $('bpm').classList.add('idle'); return; }
     $('bpm').textContent = Math.round(est.bpm);
     $('bpm').classList.remove('idle');
-    if (sessionLog && est.prominence >= CLAR_MIN && lastBreathAgo < 6) winRates.push(est.bpm);
+    if (sessionLog && monState === 'seeing' && est.prominence >= CLAR_MIN && lastBreathAgo < 6) winRates.push(est.bpm);
   }
 
   // ---------------------------------------------------------------------------
@@ -1083,16 +1120,21 @@
     const noise = Math.sqrt(ss / W);
     const recentB = breaths.filter(b => (M - 1 - b.peak) / SLOW_HZ <= 30);
     lastSNR = recentB.length >= 2 ? median(recentB.map(b => b.amp)) / (noise + 1e-12) : 0;
+    lastBand = bandSNR();
     const breathingNow = lastBreathAgo < 10;
-    const good = breathingNow && (clar >= CLAR_MIN || lastSNR >= SNR_MIN);
+    const good = breathingNow && lastBand >= BAND_MIN && (clar >= CLAR_MIN || lastSNR >= SNR_MIN);
+    goodStreak = good ? goodStreak + dt : 0;
 
-    if (good) {
+    if (good && (monState === 'seeing' || monState === 'pause' || goodStreak >= ENTER_SEC)) {
       if (monState === 'pause') closePause();
-      monState = 'seeing'; everArmed = true;
+      if (monState !== 'seeing') seeStreak = 0;
+      monState = 'seeing'; everArmed = true; seeStreak += dt;
+    } else if (good) {
+      // looks like breathing, but not for long enough yet: keep looking
     } else if (!breathingNow) {
       if (monState === 'seeing') {
         const movedNearStop = now - lastMoveSec <= lastBreathAgo + 15;
-        if (movedNearStop) monState = 'lost';
+        if (movedNearStop || seeStreak < PAUSE_AFTER_SEC) monState = 'lost';
         else {
           monState = 'pause';
           const start = now - lastBreathAgo, prev = sessionLog && sessionLog.pauses[sessionLog.pauses.length - 1];
@@ -1108,8 +1150,8 @@
         // still looking
       }
     } else {
-      // breaths found but not clearly above the noise
-      if (monState === 'pause') closePause();
+      // breaths "found" but not clearly above the noise
+      if (monState === 'pause') closePause();         // breaths came back (the pause began after 20+ s of clear breathing)
       if (monState !== 'starting') monState = 'lost';
     }
 
@@ -1332,7 +1374,7 @@
     running = true; alarmOn = false;
     sessionLog = { start: Date.now(), timeline: [], pauses: [], alarms: 0, waxWane: false };
     everArmed = false; curPause = null; sessTicks = 0; winRates = []; tRates = []; tClars = [];
-    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; $('seenV').textContent = '—';
+    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; goodStreak = 0; seeStreak = 0; lastBand = 0; $('seenV').textContent = '—';
     $('pausesV').textContent = '0'; $('patternV').textContent = '—';
     $('bpm').textContent = '--'; $('bpm').classList.add('idle');
     show('tWatch'); sizeWave(); setStatus('wait', 'Getting ready');
@@ -1808,6 +1850,7 @@
     const r = median(tRates), c = median(tClars), [word, cls] = clarityWord(c);
     $('tRate').textContent = Math.round(r) + ' /min';
     $('tClar').innerHTML = '<span class="' + cls + '">' + word + '</span> <small style="color:var(--faint);font-weight:500">' + c.toFixed(0) + '</small>';
+    $('tBand').innerHTML = '<span class="' + (lastBand >= BAND_MIN ? 'clar-strong' : 'clar-weak') + '">' + lastBand.toFixed(1) + '</span>';
     $('tPeak').innerHTML = carrierPeak + ' <small style="color:var(--faint);font-weight:500">' + (SIM ? 'sim' : (demodFreq / 1000).toFixed(1) + ' kHz') + '</small>';
   }
   function renderTests() {
@@ -1835,6 +1878,21 @@
     $('tMsg').textContent = 'Saved: ' + row.dist + ', ' + row.cover + ', read ' + rate + ' /min.';
     tRates = []; tClars = [];
     renderTests();
+  });
+  // Raw echo export, so recordings from a real room can be replayed and checked offline.
+  $('tRaw').addEventListener('click', async () => {
+    const M = ringFilled, I = [], Q = [];
+    for (let k = 0; k < M; k++) { const idx = (ringHead - M + k + N) % N; I.push(+ringI[idx].toPrecision(6)); Q.push(+ringQ[idx].toPrecision(6)); }
+    const label = prompt('What was happening? (e.g. "empty room", "side facing phone, breathing")', '') || '';
+    const data = { app: 'echo', fs: SLOW_HZ, tone: demodFreq, at: new Date().toISOString(), label,
+      dist: $('tDist').value, cover: $('tCover').value, pos: $('tPos').value, sleep: $('tSleep').value, pace: $('tPace').value, I, Q };
+    const name = 'echo-raw-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.json';
+    const file = new File([JSON.stringify(data)], name, { type: 'application/json' });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); $('tMsg').textContent = 'Saved ' + name; return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    $('tMsg').textContent = 'Downloaded ' + name + ' (' + Math.round(M / SLOW_HZ) + ' s).';
   });
   function applyTesting() { $('testPanel').classList.toggle('show', !!settings.testing); if (settings.testing) renderTests(); }
 
@@ -1874,7 +1932,7 @@
   const params = new URLSearchParams(location.search);
   let SIM = params.get('sim') || (settings.demo !== 'off' ? settings.demo : null);
   let SIM_SPEED = Math.max(1, Math.min(50, +params.get('speed') || (params.get('sim') ? 1 : settings.demoSpeed)));
-  let simTimer = null, simT = 0, simPh = 0;
+  let simTimer = null, simT = 0, simPh = 0, simDrift = 0;
   if (SIM) $('simBanner').classList.add('show');
   function wireSeg(id, key, cast, after) {
     document.querySelectorAll('#' + id + ' button').forEach(b => {
@@ -1927,15 +1985,26 @@
           else if (p >= 82 && p < 142) { shift = 0.05; amp = 0.0033; }
           else if (p >= 142 && p < 144) shift = 0.05 * (1 - (p - 142) / 2);
         }
+        if (window.__replay) {   // test hook: feed a saved raw recording
+          const R = window.__replay, i = Math.floor(simT * SLOW_HZ) - 1;
+          if (i < R.I.length) pushSlow(R.I[i], R.Q[i]);
+          continue;
+        }
+        // "empty": nobody there, just noise and slow drift; "away": breathing for 90 s, then they get up and leave
+        if (SIM === 'empty' || (SIM === 'away' && simT > 90)) {
+          if (SIM === 'away' && simT < 93) shift = 0.3 * (simT - 90) / 3;
+          amp = SIM === 'away' && simT < 93 ? 0.05 : 0;
+        }
+        simDrift += (Math.random() - 0.5) * 0.0004; simDrift *= 0.999;
         const ang = 4 * Math.PI * (0.3 + shift + dmm / 1000) / lam;
-        pushSlow(1 + amp * Math.cos(ang) + 0.002 * (Math.random() * 2 - 1),
-                 0.4 + amp * Math.sin(ang) + 0.002 * (Math.random() * 2 - 1));
+        pushSlow(1 + simDrift + amp * Math.cos(ang) + 0.002 * (Math.random() * 2 - 1),
+                 0.4 + simDrift * 0.6 + amp * Math.sin(ang) + 0.002 * (Math.random() * 2 - 1));
       }
     }, 100);
   }
 
   // test hook so automated checks can read state (harmless in normal use)
-  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null }; } };
+  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, band: lastBand, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null }; } };
 
   // ---------------------------------------------------------------------------
   // Intro: a particle story that scrolls from night to morning.
