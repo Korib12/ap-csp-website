@@ -217,6 +217,39 @@
   th { color: var(--faint); font-weight: 600; font-size: 12px; }
   .sharebox { width: 100%; height: 160px; margin-top: 8px; background: var(--bg); color: var(--ink); border: 1px solid var(--edge); border-radius: 14px; padding: 12px; font: 13px/1.5 var(--sans); }
 
+  /* ---------- Get help ---------- */
+  .backbtn { appearance: none; border: none; background: none; display: inline-flex; align-items: center; gap: 4px; padding: 6px 0; color: var(--deep); font-size: 15px; font-weight: 600; cursor: pointer; }
+  .backbtn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .helpurgent { background: #FBE3DC; border-color: #F1C2B9; }
+  .helpurgent h2 { color: #7A2A21; }
+  .helpurgent .btn { display: block; text-align: center; text-decoration: none; margin-top: 10px; }
+  .helplist { margin: 6px 0 10px; padding-left: 20px; font-size: 14px; line-height: 1.55; color: var(--dim); }
+  .helplist li { margin-bottom: 4px; } .helplist b { color: var(--ink); }
+  .card a.btn { display: block; text-align: center; text-decoration: none; margin-top: 8px; }
+  .helpcalls a.btn { margin-top: 4px; }
+  .helpentry { appearance: none; width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--panel); border: 1px solid var(--edge); border-radius: 22px; padding: 14px 16px; margin-bottom: 12px; cursor: pointer; font-family: inherit; color: var(--ink); }
+  .helpentry b { display: block; font-size: 16px; } .helpentry small { display: block; font-size: 13px; color: var(--dim); margin-top: 2px; }
+  .linkrow { text-align: center; margin: 10px 0 0; }
+
+  /* ---------- Aim check + Science view ---------- */
+  .aim { position: relative; z-index: 1; margin: 14px 0 2px; padding: 12px 14px; border-radius: 18px; background: rgba(255,244,228,.07); }
+  .aim[hidden] { display: none; }
+  .aimtop { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: #C3D6D2; }
+  .aimtop #aimWord { color: #FFF4E4; }
+  .aimbar { position: relative; height: 8px; border-radius: 4px; background: rgba(255,244,228,.12); margin: 9px 0 8px; overflow: visible; }
+  .aimbar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 4px; background: #F4A497; transition: width .4s; }
+  .aimbar i.ok { background: #E7C99A; } .aimbar i.good { background: #A9D6CF; }
+  .aimmark { position: absolute; top: -3px; bottom: -3px; width: 2px; left: 57%; background: rgba(255,244,228,.5); border-radius: 1px; }
+  .aim p { margin: 0; font-size: 13px; line-height: 1.4; color: #C3D6D2; }
+  .sci { display: none; padding: 14px; }
+  .sci.show { display: block; }
+  .scirow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .sci figure { margin: 0; }
+  .sci canvas { width: 100%; aspect-ratio: 1; border-radius: 14px; background: var(--wash); }
+  .sci figcaption { font-size: 12px; line-height: 1.4; color: var(--dim); margin-top: 8px; }
+  .sci figcaption b { color: var(--ink); }
+  .scitoggle { text-align: center; margin: 4px 0 6px; }
+
   /* ---------- Reports: day strip, dawn hero, tiles ---------- */
   .days { display: flex; gap: 8px; overflow-x: auto; margin: 0 -18px 14px; padding: 2px 18px 6px; scrollbar-width: none; }
   .days::-webkit-scrollbar { display: none; }
@@ -479,10 +512,24 @@
     <div id="tWatch" style="display:none">
       <div class="live">
         <div class="status" id="statusPill"><span class="dot"></span><span id="statusText">Waiting for breathing</span></div>
+        <div class="aim" id="aim">
+          <div class="aimtop"><span>Aim check</span><span id="aimWord">Measuring…</span></div>
+          <div class="aimbar"><i id="aimFill"></i><b class="aimmark"></b></div>
+          <p id="aimHint">Point the bottom edge of the phone straight at the chest, 10–25 cm away.</p>
+        </div>
         <div class="big"><div class="num idle" id="bpm">--</div><div class="unit">breaths<br>per minute</div></div>
         <canvas id="wave"></canvas>
       </div>
       <div class="countdown" id="countdown"></div>
+      <div class="card sci" id="sciCard">
+        <div class="scirow">
+          <figure><canvas id="iqCvs" aria-label="Echo signal in the I/Q plane"></canvas>
+            <figcaption><b>The echo (I/Q).</b> Each breath swings the dot along an arc. Its angle is the chest's distance.</figcaption></figure>
+          <figure><canvas id="specCvs" aria-label="Breathing spectrum"></canvas>
+            <figcaption><b>The rhythm.</b> The tallest peak is the breathing rate.</figcaption></figure>
+        </div>
+      </div>
+      <p class="scitoggle"><button class="linkbtn" id="sciBtn">Show the science</button></p>
       <div class="mtiles">
         <div class="mt t-teal"><span class="mi"><svg viewBox="0 0 24 24"><path d="M5 18v-3M10 18v-6M15 18v-9M20 18V6"/></svg></span><div class="k">Signal</div><div class="v"><span class="bars" id="bars"><i></i><i></i><i></i><i></i></span></div></div>
         <div class="mt t-sand"><span class="mi"><svg viewBox="0 0 24 24"><path d="M2 12s4 -7 10 -7s10 7 10 7s-4 7 -10 7s-10 -7 -10 -7z"/><circle cx="12" cy="12" r="3"/></svg></span><div class="k">Breathing seen</div><div class="v" id="seenV">—</div></div>
@@ -531,10 +578,66 @@
     <div id="reportsBody"></div>
   </section>
 
+  <!-- ==================== GET HELP ==================== -->
+  <section class="view" id="view-help">
+    <button class="backbtn" id="helpBack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
+    <h1>Get help</h1>
+    <p class="sub">Free help for breathing and sleep worries, for families in Alameda County (California's 14th District). Information checked Oct 19, 2026.</p>
+    <div class="card helpurgent">
+      <h2>If someone isn't breathing or can't be woken up</h2>
+      <p>Call 911 now. Don't wait for Echo or this app.</p>
+      <a class="btn danger" href="tel:911">Call 911</a>
+    </div>
+    <div class="card">
+      <h2><span class="gi gi-teal"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/></svg></span>When to talk to a doctor</h2>
+      <p>Signs of sleep apnea listed by the National Heart, Lung, and Blood Institute include:</p>
+      <ul class="helplist">
+        <li>Breathing that starts and stops during sleep</li>
+        <li>Frequent loud snoring</li>
+        <li>Gasping for air</li>
+        <li>Daytime sleepiness or tiredness</li>
+        <li>Headaches or dry mouth</li>
+        <li>Waking up often at night to urinate</li>
+      </ul>
+      <p>Echo can't diagnose anything, but a Morning Report showing repeated pauses is a good way to start the conversation. Share it from the Reports tab.</p>
+    </div>
+    <div class="card">
+      <h2><span class="gi gi-sand"><svg viewBox="0 0 24 24"><path d="M12 21s-6-5.3-6-11a6 6 0 0 1 12 0c0 5.7-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg></span>Find a sleep center</h2>
+      <p>The American Academy of Sleep Medicine lists accredited sleep centers. Search by ZIP code or city.</p>
+      <a class="btn secondary" href="https://sleepeducation.org/sleep-center" target="_blank" rel="noopener">Search sleep centers</a>
+    </div>
+    <div class="card">
+      <h2><span class="gi gi-coral"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.4"/><path d="M3 20c.6-3.5 3-5.5 6-5.5s5.4 2 6 5.5M15 15.2c2.6-.3 5 1.4 5.6 4.8"/></svg></span>Local help for older adults</h2>
+      <p><b>Alameda County Senior Information &amp; Assistance</b> helps older adults and families find local services. Free.</p>
+      <div class="row helpcalls"><a class="btn secondary" href="tel:18005102020">1-800-510-2020</a><a class="btn secondary" href="tel:5105773530">510-577-3530</a></div>
+      <p class="help">Outside Alameda County? The national <b>Eldercare Locator</b> (1-800-677-1116, weekdays) connects you to your local agency, with Spanish-speaking staff and interpreters for 150 languages.</p>
+    </div>
+    <div class="card">
+      <h2><span class="gi gi-deep"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></span>Medicare and sleep apnea</h2>
+      <ul class="helplist">
+        <li><b>Testing:</b> a doctor orders the sleep test. Medicare accepts a sleep-lab study or certain home sleep tests.</li>
+        <li><b>CPAP machine:</b> Medicare may cover a 12-week trial. It keeps covering it if a doctor sees the patient and documents that it's helping.</li>
+        <li><b>Rental:</b> Medicare rents the machine for 13 months of continuous use, then you own it.</li>
+        <li><b>Cost:</b> after the Part B deductible, you pay 20% of the Medicare-approved amount if the supplier accepts assignment. Medicare Advantage plans can differ.</li>
+      </ul>
+      <p><b>HICAP</b> gives free, one-on-one Medicare counseling in California.</p>
+      <a class="btn secondary" href="tel:18004340222">Call HICAP: 1-800-434-0222</a>
+    </div>
+    <p class="fine">Sources:
+      <a href="https://www.nhlbi.nih.gov/health/sleep-apnea/symptoms" target="_blank" rel="noopener">NHLBI: sleep apnea symptoms</a> ·
+      <a href="https://sleepeducation.org/sleep-center" target="_blank" rel="noopener">AASM sleep center finder</a> ·
+      <a href="https://socialservices.alamedacountyca.gov/our-services/Seniors-and-Disabled/Area-Agency-on-Aging/Senior-Information-and-Assistance/Senior-Information-and-Assistance" target="_blank" rel="noopener">Alameda County Senior Information &amp; Assistance</a> ·
+      <a href="https://eldercare.acl.gov/Public/About/Contact_Info/Index.aspx" target="_blank" rel="noopener">Eldercare Locator</a> ·
+      <a href="https://www.medicare.gov/coverage/continuous-positive-airway-pressure-devices" target="_blank" rel="noopener">Medicare: CPAP coverage</a> ·
+      <a href="https://www.cms.gov/medicare-coverage-database/view/ncd.aspx?ncdid=226" target="_blank" rel="noopener">CMS: CPAP coverage rules (sleep tests)</a> ·
+      <a href="https://ca.gov/departments/133/services/1258/" target="_blank" rel="noopener">California HICAP</a>.
+      Phone numbers and coverage can change; check with the agency.</p>
+  </section>
   <!-- ==================== SETTINGS ==================== -->
   <section class="view" id="view-settings">
     <h1>Settings</h1>
     <p class="sub">Saved on this phone only.</p>
+    <button class="helpentry" data-go="help"><span class="gi gi-coral"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/></svg></span><span><b>Get help nearby</b><small>Sleep centers, local senior services, Medicare</small></span></button>
     <div class="card">
       <h2><span class="gi gi-coral"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg></span>Alerts (experimental)</h2>
       <div class="field switch">
@@ -656,6 +759,16 @@
     noteActivity();
   }));
 
+  // Get help page: opened from Settings, Trends and Reports; Back returns to where you were.
+  let helpFrom = 'settings';
+  function openHelp() {
+    const cur = document.querySelector('nav button.on'); helpFrom = cur ? cur.dataset.tab : 'settings';
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-help'));
+    window.scrollTo(0, 0);
+  }
+  document.addEventListener('click', e => { if (e.target.closest('[data-go="help"]')) openHelp(); });
+  $('helpBack').addEventListener('click', () => document.querySelector('nav button[data-tab="' + helpFrom + '"]').click());
+
   function movePill(b) {
     const btns = [...document.querySelectorAll('nav button')];
     $('navPill').style.transform = 'translateX(' + (btns.indexOf(b) * 100) + '%)';
@@ -723,6 +836,7 @@
   const ENTER_SEC = 8;              // breathing must look good this long before recording starts
   const PAUSE_AFTER_SEC = 20;       // a pause only counts after this much clearly seen breathing
   let lastBand = 0, goodStreak = 0, seeStreak = 0, pmBuf = [];
+  let lastFit = null, lastSpec = null, aimBand = 0, aimGoodSec = 0, aimDone = false;   // science view + aim check
   let bucket = { s: 0, p: 0, l: 0 }, bandSeen = [];   // for the night timeline and the confidence badge
   let lastActivity = Date.now();
 
@@ -768,6 +882,7 @@
       const sol = [0,1,2].map(j => det3(A.map((r,i) => r.map((v,c) => c===j ? B[i] : v))) / D0);
       const cx = -sol[0]/2, cy = -sol[1]/2;
       const R = Math.sqrt(Math.max(0, cx*cx + cy*cy - sol[2]));
+      if (M === WAVE_N) lastFit = { cx: cx + mi, cy: cy + mq, R, spread, used: false };
       if (R > 0 && R < 4*spread) {
         circleRatio = R / spread;
         let prev = Math.atan2(Q[0]-cy, I[0]-cx), acc = 0; d[0] = 0;
@@ -792,6 +907,7 @@
       for (let k = 0; k < M; k++) p[k] = I[k]*c + Q[k]*s;
       if (!usedCircle || M < SLOW_HZ * 12 || rhythmScore(p) > rhythmScore(d)) { d.set(p); usedCircle = false; }
     }
+    if (M === WAVE_N) { if (lastFit) lastFit.used = usedCircle; else lastFit = { used: false }; if (!usedCircle && lastFit.R == null) lastFit.used = false; }
     // remove slow linear drift
     let st = 0, sd = 0, stt = 0, std = 0;
     for (let k = 0; k < M; k++) { st += k; sd += d[k]; stt += k*k; std += k*d[k]; }
@@ -971,9 +1087,9 @@
   
   
   // Band SNR on the raw (I, Q) echo over the last 30 s (see BAND_MIN).
-  function bandSNR() {
-    const M = Math.min(ringFilled, SLOW_HZ * 30);
-    if (M < SLOW_HZ * 15) return 0;
+  function bandSNR(winSec = 30) {
+    const M = Math.min(ringFilled, SLOW_HZ * winSec);
+    if (M < SLOW_HZ * Math.min(15, winSec)) return 0;
     const I = new Float64Array(M), Q = new Float64Array(M);
     for (let k = 0; k < M; k++) { const idx = (ringHead - M + k + N) % N; I[k] = ringI[idx]; Q[k] = ringQ[idx]; }
     // remove a straight-line trend (slow drift), then taper the ends
@@ -1041,6 +1157,7 @@
     const prominence = total > 0 ? bestP / (total / (steps + 1)) : 0;
     // peak vs the typical (median) level of the band: unlike the mean, the median isn't
     // pulled up by the peak itself, so a clean rhythm scores much higher (real 10 cm: 40-120)
+    lastSpec = { P, fLo, fHi, f };
     const sorted = Array.from(P).sort((a, b) => a - b), med = sorted[sorted.length >> 1];
     const peakMed = med > 0 ? bestP / med : 0;
     return { freq: f, bpm: f * 60, prominence, peakMed };
@@ -1120,6 +1237,7 @@
       const x = ((k + off) / (WAVE_N - 1)) * w, y = h - ((sm[k] - mn) / rng) * (h - 20) - 10;
       k ? waveCtx.lineTo(x, y) : waveCtx.moveTo(x, y);
     }
+    if (sciOn && tick % 2 === 0) drawIQ();
     waveCtx.strokeStyle = alarmOn ? '#F4A497' : '#A9D6CF'; waveCtx.lineWidth = 2.5; waveCtx.lineJoin = 'round'; waveCtx.stroke();
     if ($('night').classList.contains('show')) {
       const dot = $('nightDot');
@@ -1136,6 +1254,7 @@
     const est = estimateRate();
     if (!est) return;
     if (settings.testing) feedTest(est);
+    if (sciOn) drawSpec();
     clarBuf.push(est.prominence); if (clarBuf.length > 20) clarBuf.shift();   // last ~10 s
     pmBuf.push(est.peakMed); if (pmBuf.length > 20) pmBuf.shift();
     if (monState !== 'seeing' || est.bpm < 5 || est.bpm > 35) { $('bpm').textContent = '--'; $('bpm').classList.add('idle'); return; }
@@ -1153,6 +1272,7 @@
   // ---------------------------------------------------------------------------
   function checkBreathing() {
     const now = sessTicks / SLOW_HZ, dt = Math.max(0, now - lastCheckSec); lastCheckSec = now;
+    updateAim(now);
     if (!toneLocked) { setLost('No tone signal. Check volume and placement'); return; }
     const M = Math.min(ringFilled, SLOW_HZ * 90);
     if (M < SLOW_HZ * 15) { setStatus('wait', 'Getting ready'); return; }
@@ -1435,7 +1555,7 @@
     running = true; alarmOn = false;
     sessionLog = { start: Date.now(), timeline: [], pauses: [], alarms: 0, waxWane: false, states: '' };
     everArmed = false; curPause = null; sessTicks = 0; winRates = []; tRates = []; tClars = [];
-    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; goodStreak = 0; seeStreak = 0; lastBand = 0; pmBuf = []; bucket = { s: 0, p: 0, l: 0 }; bandSeen = []; $('seenV').textContent = '—';
+    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; goodStreak = 0; seeStreak = 0; lastBand = 0; pmBuf = []; lastFit = null; lastSpec = null; aimBand = 0; aimGoodSec = 0; aimDone = false; $('aim').hidden = false; $('aimFill').style.width = '0'; $('aimWord').textContent = 'Measuring…'; bucket = { s: 0, p: 0, l: 0 }; bandSeen = []; $('seenV').textContent = '—';
     $('pausesV').textContent = '0'; $('patternV').textContent = '—';
     $('bpm').textContent = '--'; $('bpm').classList.add('idle');
     show('tWatch'); sizeWave(); setStatus('wait', 'Getting ready');
@@ -1784,7 +1904,8 @@
           s.pauses.map(p => '<tr><td>' + fmtTime(s.start + p[0] * 1000) + '</td><td>' + p[1] + ' s</td><td>' + (p[2] ? 'Yes' : 'No') + '</td></tr>').join('') + '</table></details>' : '') +
       '</div>' +
       '<button class="btn" id="shareBtn">Share summary</button>' +
-      '<p class="hint" id="shareMsg"></p>';
+      '<p class="hint" id="shareMsg"></p>' +
+      '<p class="linkrow"><button class="linkbtn" data-go="help">Worried? Get help nearby</button></p>';
     const strip = $('dayStrip'), onDay = strip.querySelector('.on');
     if (onDay) strip.scrollLeft = onDay.offsetLeft - strip.clientWidth / 2 + onDay.offsetWidth / 2;
     root.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { selectedSessionId = +b.dataset.id; renderReports(); animateIn(root); }));
@@ -1892,6 +2013,7 @@
     const waxNights = recent.filter(n => n.waxWane).length;
     root.innerHTML =
       '<section class="verdict ' + (flagged ? 'flag' : 'ok') + '"><div class="badge"><div class="bn">' + last.avgRate + '</div><div class="bl">last night</div></div><div>' + status + '</div></section>' +
+      (flagged ? '<p class="linkrow"><button class="linkbtn" data-go="help">Get help nearby</button></p>' : '') +
       '<div class="card">' +
         '<div class="charttitle">Average breathing rate per night</div>' +
         '<div class="chartwrap"><canvas id="trendChart" style="height:180px" aria-label="Average breathing rate per night"></canvas><div class="tip" id="trendTip"></div></div>' +
@@ -2123,6 +2245,91 @@
                  0.4 + simDrift * 0.6 + amp * Math.sin(ang) + 0.002 * (Math.random() * 2 - 1));
       }
     }, 100);
+  }
+
+
+  // ---------------------------------------------------------------------------
+  // Science view: the raw echo as a dot in the I/Q plane (with the fitted circle)
+  // and the breathing spectrum. Plain canvas drawing at the wave's pace.
+  // ---------------------------------------------------------------------------
+  const sciCvs = { iq: $('iqCvs'), sp: $('specCvs') };
+  let sciOn = store.get('sci', false);
+  function applySci() { $('sciCard').classList.toggle('show', sciOn); $('sciBtn').textContent = sciOn ? 'Hide the science' : 'Show the science'; }
+  $('sciBtn').addEventListener('click', () => { sciOn = !sciOn; store.set('sci', sciOn); applySci(); });
+  applySci();
+  function prepCanvas(c) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), r = c.getBoundingClientRect();
+    if (!r.width) return null;
+    if (c.width !== Math.round(r.width * dpr)) { c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr); }
+    const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, r.width, r.height);
+    return { x, w: r.width, h: r.height };
+  }
+  function drawIQ() {
+    const g = prepCanvas(sciCvs.iq); if (!g) return;
+    const { x, w, h } = g, M = Math.min(ringFilled, WAVE_N);   // same 30 s window the circle is fitted on
+    if (M < 10) return;
+    const I = [], Q = []; let mi = 0, mq = 0;
+    for (let k = 0; k < M; k++) { const idx = (ringHead - M + k + N) % N; I.push(ringI[idx]); Q.push(ringQ[idx]); mi += ringI[idx]; mq += ringQ[idx]; }
+    mi /= M; mq /= M;
+    let rad = 1e-12;
+    for (let k = 0; k < M; k++) rad = Math.max(rad, Math.hypot(I[k] - mi, Q[k] - mq));
+    const sc = (Math.min(w, h) * 0.38) / rad, cx = w / 2, cy = h / 2;
+    const X = v => cx + (v - mi) * sc, Y = v => cy - (v - mq) * sc;
+    x.strokeStyle = 'rgba(23,80,77,.12)'; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(cx, 6); x.lineTo(cx, h - 6); x.moveTo(6, cy); x.lineTo(w - 6, cy); x.stroke();
+    if (lastFit && lastFit.used && lastFit.R < 4 * lastFit.spread) {      // the fitted circle the arc lies on (only when Echo is using it)
+      x.strokeStyle = 'rgba(42,125,118,.45)'; x.setLineDash([4, 4]); x.lineWidth = 1.2;
+      x.beginPath(); x.arc(X(lastFit.cx), Y(lastFit.cy), lastFit.R * sc, 0, 2 * Math.PI); x.stroke(); x.setLineDash([]);
+    }
+    for (let k = 1; k < M; k++) {                          // trail: older points fade
+      x.strokeStyle = 'rgba(42,125,118,' + (0.08 + 0.7 * k / M).toFixed(2) + ')'; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(X(I[k - 1]), Y(Q[k - 1])); x.lineTo(X(I[k]), Y(Q[k])); x.stroke();
+    }
+    x.fillStyle = '#E8776B'; x.beginPath(); x.arc(X(I[M - 1]), Y(Q[M - 1]), 5, 0, 2 * Math.PI); x.fill();
+    x.fillStyle = '#6E7A77'; x.font = '10px "Bricolage Grotesque", system-ui'; x.textAlign = 'left';
+    x.fillText(lastFit && lastFit.used ? 'circle fit' : 'straight-line fit', 8, h - 8);
+  }
+  function drawSpec() {
+    const g = prepCanvas(sciCvs.sp); if (!g || !lastSpec) return;
+    const { x, w, h } = g, { P, fLo, fHi, f } = lastSpec, n = P.length;
+    let mx = 0; for (const v of P) mx = Math.max(mx, v);
+    if (!mx) return;
+    const L = 10, R = w - 8, T = 22, B = h - 22;
+    const X = fr => L + (fr - fLo) / (fHi - fLo) * (R - L);
+    x.fillStyle = '#6E7A77'; x.font = '10px "Bricolage Grotesque", system-ui'; x.textAlign = 'center';
+    for (const bpm of [10, 20, 30]) { const xx = X(bpm / 60); x.fillText(bpm, xx, h - 7); x.fillStyle = 'rgba(23,80,77,.12)'; x.fillRect(xx, T, 1, B - T); x.fillStyle = '#6E7A77'; }
+    x.beginPath(); x.moveTo(L, B);
+    for (let i = 0; i < n; i++) x.lineTo(L + i / (n - 1) * (R - L), B - (P[i] / mx) * (B - T));
+    x.lineTo(R, B); x.closePath(); x.fillStyle = 'rgba(42,125,118,.18)'; x.fill();
+    x.beginPath();
+    for (let i = 0; i < n; i++) { const xx = L + i / (n - 1) * (R - L), yy = B - (P[i] / mx) * (B - T); i ? x.lineTo(xx, yy) : x.moveTo(xx, yy); }
+    x.strokeStyle = '#2A7D76'; x.lineWidth = 1.8; x.stroke();
+    const px = X(f);
+    x.fillStyle = '#E8776B'; x.beginPath(); x.arc(px, T, 4, 0, 2 * Math.PI); x.fill();
+    x.fillStyle = '#23312F'; x.font = '600 12px "Bricolage Grotesque", system-ui';
+    x.textAlign = px > w - 50 ? 'right' : px < 50 ? 'left' : 'center'; x.fillText(Math.round(f * 60) + ' /min', px, T - 8);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Aim check: for the first 90 s, a quick meter (8 s window) so the phone can be
+  // nudged until it faces the chest. Hides itself once the aim has looked good for 10 s.
+  // ---------------------------------------------------------------------------
+  function updateAim(now) {
+    const el = $('aim');
+    if (aimDone || now > 90) { if (!aimDone) aimDone = true; el.hidden = true; return; }
+    el.hidden = false;
+    aimBand = bandSNR(8);
+    if (!aimBand) return;
+    const v = Math.max(0, Math.min(1, Math.log10(Math.max(1, aimBand)) / 3));   // 1 -> 0, 50 -> 0.57, 1000 -> 1
+    const fill = $('aimFill'); fill.style.width = (v * 100).toFixed(0) + '%';
+    const lvl = aimBand >= 150 ? 'good' : aimBand >= BAND_MIN ? 'ok' : 'weak';
+    fill.className = lvl === 'weak' ? '' : lvl;
+    $('aimWord').textContent = lvl === 'good' ? 'Good' : lvl === 'ok' ? 'Okay' : 'Too weak';
+    $('aimHint').textContent = lvl === 'good' ? 'Good aim. Leave the phone right here.'
+      : lvl === 'ok' ? 'Okay. A little closer or more straight-on will help.'
+      : 'Too weak. Point the bottom edge straight at the chest and move the phone closer (10–25 cm).';
+    aimGoodSec = lvl === 'good' ? aimGoodSec + 1 : 0;
+    if (aimGoodSec >= 10) setTimeout(() => { aimDone = true; el.hidden = true; }, 3000);
   }
 
   // test hook so automated checks can read state (harmless in normal use)
