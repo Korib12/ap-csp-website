@@ -241,6 +241,17 @@
   .ringw .lab b { font-size: 26px; font-weight: 600; letter-spacing: -0.03em; }
   .ringw .lab span { font-size: 11px; font-weight: 600; opacity: .75; }
   .dawn .cmp { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; background: rgba(255,255,255,.6); padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .dawn .lede { margin: 14px 0 0; font-size: 16px; line-height: 1.45; font-weight: 500; max-width: 30em; }
+  .dawn .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .dawn .pills .cmp { margin-top: 0; }
+  .conf .cdot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .conf.high .cdot { background: var(--breath); } .conf.medium .cdot { background: var(--tan); } .conf.low .cdot { background: var(--coral); }
+  .dawn .confwhy { margin: 8px 2px 0; font-size: 12px; opacity: .75; }
+  .strip { position: relative; display: flex; height: 30px; border-radius: 10px; overflow: hidden; margin: 6px 0 6px; }
+  .strip span { display: block; height: 100%; }
+  .strip .pt { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1px; background: #D4574B; border-radius: 1px; }
+  .stripax { display: flex; justify-content: space-between; font-size: 11px; color: var(--text, #6E7A77); }
+  .lk.sw { width: 12px; height: 10px; border-radius: 3px; }
   .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
   .duo .mt .v small { font-size: 13px; font-weight: 500; opacity: .75; }
   /* ---------- Trends: verdict badge ---------- */
@@ -712,6 +723,7 @@
   const ENTER_SEC = 8;              // breathing must look good this long before recording starts
   const PAUSE_AFTER_SEC = 20;       // a pause only counts after this much clearly seen breathing
   let lastBand = 0, goodStreak = 0, seeStreak = 0, pmBuf = [];
+  let bucket = { s: 0, p: 0, l: 0 }, bandSeen = [];   // for the night timeline and the confidence badge
   let lastActivity = Date.now();
 
   function resetBuffer() {
@@ -1062,6 +1074,9 @@
     if (sessionLog && sessTicks % (SLOW_HZ * 30) === 0) {
       sessionLog.timeline.push([sessTicks / SLOW_HZ, winRates.length ? Math.round(median(winRates)) : null]);
       winRates = [];
+      // what Echo mostly saw in these 30 s: s = recording, p = pause, l = couldn't see
+      sessionLog.states += bucket.p >= 10 ? 'p' : bucket.s + bucket.p >= 15 ? 's' : 'l';
+      bucket = { s: 0, p: 0, l: 0 };
     }
     drawWave();
     if (tick % 5 === 0) updateRate();          // twice a second
@@ -1200,6 +1215,8 @@
     }
 
     if (monState === 'seeing' || monState === 'pause') seenSec += dt;
+    bucket[monState === 'seeing' ? 's' : monState === 'pause' ? 'p' : 'l'] += dt;
+    if (monState === 'seeing' && Math.floor(now) % 10 === 0 && bandSeen.length < 5000) bandSeen.push(lastBand);
     if (sessionLog && now > 0) $('seenV').textContent = Math.round(100 * seenSec / now) + '%';
 
     if (alarmOn) return;
@@ -1416,9 +1433,9 @@
   function beginWatching() {
     resetBuffer();
     running = true; alarmOn = false;
-    sessionLog = { start: Date.now(), timeline: [], pauses: [], alarms: 0, waxWane: false };
+    sessionLog = { start: Date.now(), timeline: [], pauses: [], alarms: 0, waxWane: false, states: '' };
     everArmed = false; curPause = null; sessTicks = 0; winRates = []; tRates = []; tClars = [];
-    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; goodStreak = 0; seeStreak = 0; lastBand = 0; pmBuf = []; $('seenV').textContent = '—';
+    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; goodStreak = 0; seeStreak = 0; lastBand = 0; pmBuf = []; bucket = { s: 0, p: 0, l: 0 }; bandSeen = []; $('seenV').textContent = '—';
     $('pausesV').textContent = '0'; $('patternV').textContent = '—';
     $('bpm').textContent = '--'; $('bpm').classList.add('idle');
     show('tWatch'); sizeWave(); setStatus('wait', 'Getting ready');
@@ -1452,8 +1469,10 @@
     closePause();
     const s = sessionLog;
     if (winRates.length) s.timeline.push([sessTicks / SLOW_HZ, Math.round(median(winRates))]);
+    if (bucket.s + bucket.p + bucket.l >= 5) s.states += bucket.p >= 10 ? 'p' : bucket.s + bucket.p >= (bucket.s + bucket.p + bucket.l) / 2 ? 's' : 'l';
     const entry = finishSession({ id: s.start, start: s.start, durSec: Math.round(sessTicks / SLOW_HZ),
-      timeline: s.timeline, pauses: s.pauses, alarms: s.alarms, waxWane: s.waxWane, sim: !!SIM, seenSec: Math.round(seenSec) });
+      timeline: s.timeline, pauses: s.pauses, alarms: s.alarms, waxWane: s.waxWane, sim: !!SIM, seenSec: Math.round(seenSec),
+      states: s.states, bandMed: bandSeen.length ? Math.round(median(bandSeen)) : null });
     saveSessions(loadSessions().concat([entry]));
     selectedSessionId = entry.id;
   }
@@ -1728,20 +1747,27 @@
     if (cmp) normalLine = cmp.flagged ? '<span class="flagtxt">' + ICON_FLAG + 'Above normal</span> (' + (cmp.diff > 0 ? '+' : '') + cmp.diff + ' vs ' + cmp.base + ')' : 'Within normal (normal is ' + cmp.base + ')';
     const seenPct = Math.round(100 * s.coverage), C2 = 2 * Math.PI * 46;
     const cmpPill = cmp ? '<div class="cmp">' + (cmp.flagged ? ICON_FLAG + 'Above their normal of ' + cmp.base : ICON_OK + 'Within their normal') + '</div>' : '';
+    const conf = confidenceOf(s);
+    const confPill = '<div class="cmp conf ' + conf.level.toLowerCase() + '" title="' + esc(conf.why) + '"><i class="cdot"></i>' + conf.level + ' confidence</div>';
     root.innerHTML =
       '<div class="days" id="dayStrip">' + days + '</div>' +
       '<section class="dawn">' +
         '<div class="when"><span>' + esc(fmtDay(s.start)) + (s.sample ? ' (sample)' : s.sim ? ' (demo)' : '') + '</span><span>' + esc(fmtTime(s.start)) + ' to ' + esc(fmtTime(s.start + s.durSec * 1000)) + '</span></div>' +
+        '<p class="lede">' + esc(summarySentence(s, cmp)) + '</p>' +
         '<div class="main"><div><div class="k">Average breathing</div><div class="hnum">' + (s.avgRate ?? '—') + (s.avgRate ? '<small>/min</small>' : '') + '</div>' +
-          '<div class="k2">' + (s.lowRate ? 'Typical ' + s.lowRate + '–' + s.highRate + ' per minute' : 'No rate recorded') + '</div></div>' +
+          '<div class="k2">' + (s.lowRate ? (s.lowRate === s.highRate ? 'Steady at ' + s.lowRate + ' per minute' : 'Typical ' + s.lowRate + '–' + s.highRate + ' per minute') : 'No rate recorded') + '</div></div>' +
           '<div class="ringw" role="img" aria-label="Breathing seen ' + seenPct + '% of the night"><svg viewBox="0 0 112 112"><circle class="bg" cx="56" cy="56" r="46" fill="none" stroke-width="10"/>' +
           '<circle class="fg" cx="56" cy="56" r="46" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + C2.toFixed(1) + '" stroke-dashoffset="' + (C2 * (1 - s.coverage)).toFixed(1) + '" data-off="' + (C2 * (1 - s.coverage)).toFixed(1) + '" data-full="' + C2.toFixed(1) + '"/></svg>' +
           '<div class="lab"><b>' + seenPct + '%</b><span>seen</span></div></div></div>' +
-        cmpPill +
+        '<div class="pills">' + confPill + cmpPill + '</div>' +
+        '<p class="confwhy">' + esc(conf.why) + '.</p>' +
       '</section>' +
       '<div class="duo">' +
         '<div class="mt t-coral"><span class="mi"><svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></span><div class="k">Pauses of 10 s or more</div><div class="v">' + s.pauseCount + '</div></div>' +
         '<div class="mt t-sand"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4"/></svg></span><div class="k">Longest pause</div><div class="v">' + (longest ? longest + '<small> s</small>' : 'None') + '</div></div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<div class="charttitle">What Echo saw through the night</div>' + stripHTML(s) +
       '</div>' +
       '<div class="card">' +
         '<div class="charttitle">Breathing rate through the night</div>' +
@@ -1766,9 +1792,53 @@
     drawNightChart($('nightChart'), $('nightTip'), s);
   }
 
+  // How much to trust a night's report: how much of it Echo saw, and how strong the signal was.
+  function confidenceOf(s) {
+    const cov = s.coverage ?? 1, pct = Math.round(cov * 100);
+    if (cov < 0.4) return { level: 'Low', why: 'Breathing seen only ' + pct + '% of the time' };
+    if (cov < 0.7) return { level: 'Medium', why: 'Breathing seen ' + pct + '% of the time' };
+    if (s.minutes < 30) return { level: 'Medium', why: 'Short session (' + fmtDur(s.minutes) + ')' };
+    if (s.bandMed != null && s.bandMed < 120) return { level: 'Medium', why: 'Weak signal (phone may be far from the chest)' };
+    return { level: 'High', why: 'Breathing seen ' + pct + '% of the time with a strong signal' };
+  }
+  // One plain sentence a family member can read in two seconds. Describes, never diagnoses.
+  function summarySentence(s, cmp) {
+    const pct = Math.round(100 * (s.coverage ?? 1));
+    if ((s.coverage ?? 1) < 0.4 || !s.avgRate)
+      return "Echo could see breathing only " + pct + "% of the " + (s.minutes >= 60 ? 'night' : 'session') + ", so this report is limited. Check the phone's placement next time.";
+    const n = s.pauseCount, when = s.minutes >= 60 ? 'night' : 'session';
+    const lead = n === 0 ? 'A calm ' + when : n <= 3 ? 'A mostly calm ' + when : 'A ' + when + ' with several pauses';
+    const rel = cmp ? (cmp.flagged ? ', above their normal of ' + cmp.base : ', within their normal') : '';
+    return lead + ': breathing averaged ' + s.avgRate + ' per minute' + rel + ', ' + (n === 0 ? 'no pauses' : n === 1 ? '1 pause' : n + ' pauses') +
+      ' of 10 seconds or more, and Echo could see breathing ' + pct + '% of the time.';
+  }
+  // The night as one strip: recording / pause / couldn't see, in 30 s steps.
+  function nightStates(s) {
+    if (s.states) return s.states;
+    return s.timeline.map(p => p[1] != null ? 's' : 'l').join('');   // older nights: rate recorded or not
+  }
+  function stripHTML(s) {
+    const st = nightStates(s);
+    if (!st.length) return '';
+    const col = { s: '#A9D6CF', p: '#D4574B', l: '#E4D8C5' }, runs = [];
+    for (let i = 0; i < st.length; i++) {
+      if (runs.length && runs[runs.length - 1][0] === st[i]) runs[runs.length - 1][1]++;
+      else runs.push([st[i], 1]);
+    }
+    const ticks = s.pauses.map(p => '<i class="pt" style="left:' + Math.min(99.6, 100 * p[0] / Math.max(1, s.durSec)).toFixed(2) + '%"></i>').join('');
+    const end = s.start + s.durSec * 1000, mid = s.start + s.durSec * 500;
+    return '<div class="strip" role="img" aria-label="Night timeline: teal = breathing recorded, gray = could not see, red marks = pauses">' +
+      runs.map(r => '<span style="flex:' + r[1] + ';background:' + col[r[0]] + '"></span>').join('') + ticks + '</div>' +
+      '<div class="stripax"><span>' + esc(fmtTime(s.start)) + '</span>' + (s.durSec > 3600 ? '<span>' + esc(fmtTime(mid)) + '</span>' : '') + '<span>' + esc(fmtTime(end)) + '</span></div>' +
+      '<div class="legend"><span><i class="lk sw" style="background:#A9D6CF"></i>Breathing recorded</span><span><i class="lk sw" style="background:#E4D8C5"></i>Couldn\'t see</span><span><i class="lk pause"></i>Pause of 10 s or more</span></div>';
+  }
+
   function summaryText(s, cmp, longest) {
     const lines = [
       'Echo night summary' + (s.sample ? ' (sample data)' : s.sim ? ' (simulation)' : ''),
+      summarySentence(s, cmp),
+      'Data confidence: ' + confidenceOf(s).level + ' (' + confidenceOf(s).why.toLowerCase() + ')',
+      '',
       fmtDay(s.start) + ', ' + fmtTime(s.start) + ' to ' + fmtTime(s.start + s.durSec * 1000) + ' (' + fmtDur(s.minutes) + ')',
       'Average breathing: ' + (s.avgRate ? s.avgRate + ' breaths/min' + (s.lowRate ? ' (typical ' + s.lowRate + '–' + s.highRate + ')' : '') : 'not recorded'),
       'Breathing pauses of 10+ seconds: ' + s.pauseCount + (longest ? ' (longest ' + longest + ' s)' : ''),
@@ -1858,7 +1928,15 @@
       const pauses = [];
       for (let i = 0; i < nP; i++) pauses.push([Math.round(rnd() * durSec), 10 + Math.floor(rnd() * 8), 0]);
       pauses.sort((a, b) => a[0] - b[0]);
-      out.push(finishSession({ id: start.getTime(), start: start.getTime(), durSec, timeline, pauses, alarms: 0, waxWane: high && rnd() < 0.6, sample: true, seenSec: Math.round(durSec * (0.72 + rnd() * 0.23)) }));
+      // states: mostly recorded, with a few "couldn't see" stretches (rolling over), pauses marked
+      const nB = Math.ceil(durSec / 30), cov = 0.72 + rnd() * 0.23;
+      const st = new Array(nB).fill('s');
+      let lostLeft = Math.round(nB * (1 - cov));
+      while (lostLeft > 0) { const a = Math.floor(rnd() * nB), len = Math.min(lostLeft, 4 + Math.floor(rnd() * 16)); for (let i = a; i < Math.min(nB, a + len); i++) st[i] = 'l'; lostLeft -= len; }
+      for (const p of pauses) st[Math.min(nB - 1, Math.floor(p[0] / 30))] = 'p';
+      for (let i = 0; i < nB; i++) if (st[i] === 'l' && timeline[i]) timeline[i][1] = null;
+      out.push(finishSession({ id: start.getTime(), start: start.getTime(), durSec, timeline, pauses, alarms: 0, waxWane: high && rnd() < 0.6, sample: true,
+        seenSec: Math.round(durSec * st.filter(c => c !== 'l').length / nB), states: st.join(''), bandMed: 180 + Math.round(rnd() * 400) }));
     }
     return out;
   }
