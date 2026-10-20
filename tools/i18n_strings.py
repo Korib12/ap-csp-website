@@ -368,4 +368,12 @@ S = [
 ("Photo: Tabitha Turner / Unsplash", "Foto: Tabitha Turner / Unsplash", "照片：Tabitha Turner / Unsplash", "Ảnh: Tabitha Turner / Unsplash"),
 ("Photo: Charmil Gandhi / Unsplash", "Foto: Charmil Gandhi / Unsplash", "照片：Charmil Gandhi / Unsplash", "Ảnh: Charmil Gandhi / Unsplash"),
 ("Photo: Samira Sadeqi / Unsplash", "Foto: Samira Sadeqi / Unsplash", "照片：Samira Sadeqi / Unsplash", "Ảnh: Samira Sadeqi / Unsplash"),
+# ---- snoring, out of bed
+("Snoring", "Ronquidos", "打鼾", "Ngáy"),
+("Out of bed or out of view", "Fuera de la cama o fuera de vista", "离床或不在视野内", "Rời giường hoặc ngoài tầm nhìn"),
+("None detected", "No se detectaron", "未检测到", "Không phát hiện"),
+("Not measured", "No medido", "未测量", "Không đo"),
+("Gets up", "Se levanta", "起床", "Thức dậy"),
+("Snoring: {d}", "Ronquidos: {d}", "打鼾：{d}", "Ngáy: {d}"),
+("Out of bed or out of view: {t}", "Fuera de la cama o fuera de vista: {t}", "离床或不在视野内：{t}", "Rời giường hoặc ngoài tầm nhìn: {t}"),
 ]
