@@ -3,11 +3,17 @@
 Raw echo data saved from the app's test panel ("Save raw recording"): 10 (I, Q) samples per second at the tone shown in each file.
 Replay any file through the app engine with `node tools/replay.js <file>` (needs Playwright).
 
-| File | What happened | Result with current rules |
-|---|---|---|
-| 2026-10-18_standing-in-room_breathing-at-start.json | Breathing at the phone for the first minute, then standing and moving around the room (189 s) | Recorded only the breathing at the start (rate 19); the rest rejected |
-| 2026-10-18_side-facing-phone_breathing.json | Lying on side facing the phone, breathing (94 s) | Recorded from 45 s on, rate 13–17 /min |
+| File | What happened | Recorded | Rate while recording |
+|---|---|---|---|
+| 2026-10-19_empty-room.json | Nobody in the room (205 s) | 0% | — |
+| 2026-10-18_standing-in-room_breathing-at-start.json | Breathing at the phone for a minute, then standing and moving in the room (189 s) | 17% | 19 during the breathing; a few wrong readings (6–9) while standing |
+| 2026-10-19_10cm_tshirt_breathing.json | Side, 10 cm, T-shirt (99 s) | 73% | 15–17 (one 7) |
+| 2026-10-18_side-facing-phone_breathing.json | Side facing the phone, breathing (94 s) | 49% | 13–15 |
+| 2026-10-19_40cm_tshirt_breathing.json | Side, 40 cm, T-shirt (89 s) | 12% | 15–16 |
+| 2026-10-19_40cm_hoodie_breathing.json | Side, 40 cm, hoodie (86 s) | 11% | 16, one 6 |
+
+At 40 cm the breathing was barely above the noise of an empty room, so Echo mostly declines to record there. At 10–20 cm the rhythm is clear and the rate is steady.
 
 What the numbers showed:
-- Motion vs noise (band SNR): breathing 400–1500, person moving in the room 10–90, noise about 1.
-- Breath stroke vs jitter: breathing 14–22, person moving in the room 2–9.
+- Motion vs noise (band SNR), 30 s medians: empty room 4–27, person standing in the room 10–90, breathing at 40 cm 15–185, breathing at 10–20 cm 110–1500. Cutoff: 50.
+- Rate fix: on the 10 cm recording the circle fit turned a clean 16 /min into 6–7 /min (a bad fit to a blob, R/spread near 1). Echo now also tries a straight projection and keeps whichever shows the clearer rhythm, and removes slow drift before measuring the rate.

@@ -448,7 +448,7 @@
         <article class="stepcard c1"><div class="art"><span class="n">1</span><svg viewBox="0 0 48 48"><path d="M18 6v10M30 6v10M14 16h20v8a10 10 0 0 1 -20 0zM24 34v8"/></svg></div>
           <h3>Plug in the phone</h3><p>Echo keeps the screen on all night, so it needs power.</p></article>
         <article class="stepcard c2"><div class="art"><span class="n">2</span><svg viewBox="0 0 48 48"><rect x="6" y="14" width="12" height="20" rx="2.5"/><path d="M23 19q4 5 0 10M28 15q7 9 0 18M33 11q10 13 0 26"/></svg></div>
-          <h3>Face the chest, side sleepers</h3><p>Nightstand at mattress height, 30–50 cm away, bottom edge pointing at the chest. The sound bounces like light off a mirror, so aim straight on.</p></article>
+          <h3>Face the chest, side sleepers</h3><p>On the mattress or nightstand at chest height, 10–25 cm away, bottom edge pointing at the chest. The sound bounces like light off a mirror, so aim straight on.</p></article>
         <article class="stepcard c3"><div class="art"><span class="n">3</span><svg viewBox="0 0 48 48"><path d="M8 19h7l9 -8v26l-9 -8h-7z"/><path d="M30 18q4 6 0 12M35 14q8 10 0 20"/></svg></div>
           <h3>Volume up, earbuds out</h3><p>The tone plays through the speaker. You won't hear it, but the phone needs to.</p></article>
         <article class="stepcard c4"><div class="art"><span class="n">4</span><svg viewBox="0 0 48 48"><path d="M38 29A15 15 0 0 1 19 10a15 15 0 1 0 19 19z"/></svg></div>
@@ -481,7 +481,7 @@
       <div class="card testpanel" id="testPanel">
         <h2>Test panel</h2>
         <div class="tgrid">
-          <label>Distance<select id="tDist"><option>20 cm</option><option>40 cm</option><option>60 cm</option><option>90 cm</option></select></label>
+          <label>Distance<select id="tDist"><option>10 cm</option><option selected>20 cm</option><option>40 cm</option><option>60 cm</option><option>90 cm</option></select></label>
           <label>Covering<select id="tCover"><option>T-shirt</option><option>Tight hoodie</option><option>Loose hoodie</option><option>Thin blanket</option><option>Thick comforter</option></select></label>
           <label>Your pace<select id="tPace"><option>10 /min</option><option selected>15 /min</option><option>30 /min</option><option>Normal</option></select></label>
           <label>Phone placement<select id="tPos"><option>Nightstand, tilted 45° down</option><option>Headboard, tilted down</option><option>Beside on bed, flat</option><option>In front (sitting)</option></select></label>
@@ -704,15 +704,14 @@
   // signal with itself, so they also "find" breathing in pure noise. Band SNR compares
   // motion in the breathing band (6-42 /min) with the phone's own noise floor (90-270 /min)
   // in the raw echo. Pure noise scores about 1; a breathing chest scores far higher.
-  // Set from real recordings (Oct 18): pure noise ~1, a person standing and moving in the
-  // room 10-90, breathing at the phone 400-1500 (and 3000+ up close).
-  const BAND_MIN = 20;
-  // Breath strokes must also stand clearly above the jitter. Real breathing scored 14-22;
-  // a person moving around the room scored 2-9 (but sometimes looked periodic).
-  const SNR_GATE = 10;
+  // Set from 6 real recordings (Oct 18-19), median of each 30 s stretch:
+  //   empty room 4-27 · person standing in the room 10-90 · breathing at 40 cm 15-185 (rate not
+  //   reliable there) · breathing at 10-20 cm 110-1500 with a steady, correct rate.
+  const BAND_MIN = 50;
+  const PM_MIN = 12;                // rhythm score (peak vs median); clean 10-20 cm breathing reached 14-65
   const ENTER_SEC = 8;              // breathing must look good this long before recording starts
   const PAUSE_AFTER_SEC = 20;       // a pause only counts after this much clearly seen breathing
-  let lastBand = 0, goodStreak = 0, seeStreak = 0;
+  let lastBand = 0, goodStreak = 0, seeStreak = 0, pmBuf = [];
   let lastActivity = Date.now();
 
   function resetBuffer() {
@@ -743,7 +742,7 @@
     }
     const spread = Math.sqrt((sxx + syy) / M);
     const d = new Float32Array(M);
-    let usedCircle = false;
+    let usedCircle = false, circleRatio = 0;
     // Kasa circle fit: x^2 + y^2 + D x + E y + F = 0
     let a11=0,a12=0,a13=0,a22=0,a23=0,b1=0,b2=0,b3=0;
     for (let k = 0; k < M; k++) {
@@ -758,6 +757,7 @@
       const cx = -sol[0]/2, cy = -sol[1]/2;
       const R = Math.sqrt(Math.max(0, cx*cx + cy*cy - sol[2]));
       if (R > 0 && R < 4*spread) {
+        circleRatio = R / spread;
         let prev = Math.atan2(Q[0]-cy, I[0]-cx), acc = 0; d[0] = 0;
         for (let k = 1; k < M; k++) {
           const a = Math.atan2(Q[k]-cy, I[k]-cx);
@@ -769,10 +769,16 @@
         usedCircle = true;
       }
     }
-    if (!usedCircle) {
+    // A fitted circle about as big as the cloud of points (R/spread near 1) can be a
+    // bad fit to a blob, not a real arc: on a real 10 cm recording it turned a clean
+    // 16 /min breath into 6-7 /min. In that case try the straight projection (PCA) too
+    // and keep whichever shows the clearer breathing rhythm.
+    if (!usedCircle || circleRatio < 1.25) {
       const ang = 0.5 * Math.atan2(2*sxy, sxx - syy);
       const c = Math.cos(ang), s = Math.sin(ang);
-      for (let k = 0; k < M; k++) d[k] = I[k]*c + Q[k]*s;
+      const p = new Float32Array(M);
+      for (let k = 0; k < M; k++) p[k] = I[k]*c + Q[k]*s;
+      if (!usedCircle || M < SLOW_HZ * 12 || rhythmScore(p) > rhythmScore(d)) { d.set(p); usedCircle = false; }
     }
     // remove slow linear drift
     let st = 0, sd = 0, stt = 0, std = 0;
@@ -782,6 +788,22 @@
     const icpt = (sd - slope*st) / M;
     for (let k = 0; k < M; k++) d[k] -= icpt + slope*k;
     return d;
+  }
+
+  // How clearly a signal shows one breathing rhythm: strongest frequency in 6-36 /min
+  // vs the median level of that band, after removing slow drift. Coarse, for choosing.
+  function rhythmScore(x) {
+    const M = x.length, h = Math.round(5 * SLOW_HZ), pre = new Float64Array(M + 1), y = new Float64Array(M);
+    for (let k = 0; k < M; k++) pre[k + 1] = pre[k] + x[k];
+    for (let k = 0; k < M; k++) { const a = Math.max(0, k - h), b = Math.min(M, k + h + 1); y[k] = (x[k] - (pre[b] - pre[a]) / (b - a)) * (0.5 - 0.5 * Math.cos(2 * Math.PI * k / (M - 1))); }
+    const P = [];
+    for (let f = 0.1; f <= 0.6001; f += 0.0125) {
+      let re = 0, im = 0;
+      for (let k = 0; k < M; k += 2) { const ph = 2 * Math.PI * f * k / SLOW_HZ; re += y[k] * Math.cos(ph); im -= y[k] * Math.sin(ph); }
+      P.push(re * re + im * im);
+    }
+    const mx = Math.max(...P), srt = P.slice().sort((a, b) => a - b), med = srt[srt.length >> 1];
+    return med > 0 ? mx / med : 0;
   }
 
   // Breath-by-breath approach and RMSSD regularity score adapted from
@@ -965,12 +987,22 @@
 
   // Breathing rate = strongest frequency of the displacement signal in
   // 0.08–0.6 Hz (5–36 breaths/min), using the most recent ~28 s.
+  // Remove slow drift (body settling, the phone warming up) by subtracting a moving
+  // average a few breaths long. Real lying-down recordings showed this drift pulling the
+  // rate down to 5-7 /min and making the live graph wander.
+  function removeDrift(d, winSec) {
+    const M = d.length, h = Math.round(winSec * SLOW_HZ / 2), pre = new Float64Array(M + 1), out = new Float32Array(M);
+    for (let k = 0; k < M; k++) pre[k + 1] = pre[k] + d[k];
+    for (let k = 0; k < M; k++) { const a = Math.max(0, k - h), b = Math.min(M, k + h + 1); out[k] = d[k] - (pre[b] - pre[a]) / (b - a); }
+    return out;
+  }
+
   function estimateRate() {
     if (ringFilled < SLOW_HZ * 20) return null;
     const M = Math.min(ringFilled, SLOW_HZ * RATE_WIN_S);
-    const x = displacement(M);
+    const x = removeDrift(displacement(M), 10);
     for (let k = 0; k < M; k++) x[k] *= 0.5 - 0.5*Math.cos(2*Math.PI*k/(M-1)); // Hann
-    const fLo = 0.08, fHi = 0.6, steps = 130;
+    const fLo = 0.1, fHi = 0.6, steps = 125;
     const P = new Float32Array(steps + 1);
     let bestS = 0, bestP = 0, total = 0;
     for (let s = 0; s <= steps; s++) {
@@ -986,15 +1018,20 @@
     let f = fLo + (fHi - fLo) * bestS / steps;
     // Safety net against the "double counting" error: if there is strong energy
     // at half the detected rate, the true breath is probably the slower one.
+    // Only for fast readings (24+ /min): on real data it also halved a correct 17 to 8.5.
     const fHalf = f / 2;
-    if (fHalf >= fLo) {
+    if (f >= 0.4 && fHalf >= fLo) {
       const sHalf = Math.round((fHalf - fLo) / (fHi - fLo) * steps);
       let pHalf = 0;
       for (let s = Math.max(0, sHalf-2); s <= Math.min(steps, sHalf+2); s++) pHalf = Math.max(pHalf, P[s]);
       if (pHalf > 0.5 * bestP) { f = fHalf; bestP = pHalf; }
     }
     const prominence = total > 0 ? bestP / (total / (steps + 1)) : 0;
-    return { freq: f, bpm: f * 60, prominence };
+    // peak vs the typical (median) level of the band: unlike the mean, the median isn't
+    // pulled up by the peak itself, so a clean rhythm scores much higher (real 10 cm: 40-120)
+    const sorted = Array.from(P).sort((a, b) => a - b), med = sorted[sorted.length >> 1];
+    const peakMed = med > 0 ? bestP / med : 0;
+    return { freq: f, bpm: f * 60, prominence, peakMed };
   }
 
 
@@ -1053,7 +1090,7 @@
     waveCtx.clearRect(0, 0, w, h);
     if (ringFilled < 20) return;
     const M = Math.min(ringFilled, WAVE_N);
-    const d = displacement(M);
+    const d = removeDrift(displacement(M), 10);
     let mn = Infinity, mx = -Infinity;
     const sm = new Float32Array(M);
     for (let k = 0; k < M; k++) {
@@ -1085,10 +1122,11 @@
     if (!est) return;
     if (settings.testing) feedTest(est);
     clarBuf.push(est.prominence); if (clarBuf.length > 20) clarBuf.shift();   // last ~10 s
+    pmBuf.push(est.peakMed); if (pmBuf.length > 20) pmBuf.shift();
     if (monState !== 'seeing' || est.bpm < 5 || est.bpm > 35) { $('bpm').textContent = '--'; $('bpm').classList.add('idle'); return; }
     $('bpm').textContent = Math.round(est.bpm);
     $('bpm').classList.remove('idle');
-    if (sessionLog && monState === 'seeing' && est.prominence >= CLAR_MIN && lastBreathAgo < 6) winRates.push(est.bpm);
+    if (sessionLog && monState === 'seeing' && (est.prominence >= CLAR_MIN || est.peakMed >= PM_MIN) && lastBreathAgo < 6) winRates.push(est.bpm);
   }
 
   // ---------------------------------------------------------------------------
@@ -1127,7 +1165,8 @@
     lastSNR = recentB.length >= 2 ? median(recentB.map(b => b.amp)) / (noise + 1e-12) : 0;
     lastBand = bandSNR();
     const breathingNow = lastBreathAgo < 10;
-    const good = breathingNow && lastBand >= BAND_MIN && lastSNR >= SNR_GATE && (clar >= CLAR_MIN || lastSNR >= SNR_MIN);
+    const pm = pmBuf.length ? median(pmBuf) : 0;
+    const good = breathingNow && lastBand >= BAND_MIN && (clar >= CLAR_MIN || lastSNR >= SNR_MIN || pm >= PM_MIN);
     goodStreak = good ? goodStreak + dt : 0;
 
     if (good && (monState === 'seeing' || monState === 'pause' || goodStreak >= ENTER_SEC)) {
@@ -1379,7 +1418,7 @@
     running = true; alarmOn = false;
     sessionLog = { start: Date.now(), timeline: [], pauses: [], alarms: 0, waxWane: false };
     everArmed = false; curPause = null; sessTicks = 0; winRates = []; tRates = []; tClars = [];
-    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; goodStreak = 0; seeStreak = 0; lastBand = 0; $('seenV').textContent = '—';
+    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; goodStreak = 0; seeStreak = 0; lastBand = 0; pmBuf = []; $('seenV').textContent = '—';
     $('pausesV').textContent = '0'; $('patternV').textContent = '—';
     $('bpm').textContent = '--'; $('bpm').classList.add('idle');
     show('tWatch'); sizeWave(); setStatus('wait', 'Getting ready');
@@ -2009,7 +2048,7 @@
   }
 
   // test hook so automated checks can read state (harmless in normal use)
-  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, band: lastBand, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null }; } };
+  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, band: lastBand, pm: pmBuf.length ? median(pmBuf) : 0, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null }; } };
 
   // ---------------------------------------------------------------------------
   // Intro: a particle story that scrolls from night to morning.
