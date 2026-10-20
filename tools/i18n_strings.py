@@ -346,4 +346,10 @@ S = [
 ("Echo’s “normal” is the middle value of up to 14 earlier nights where it saw breathing for 30+ minutes and at least half the night.", "Lo “normal” para Echo es el valor central de hasta 14 noches anteriores en las que vio la respiración durante 30+ minutos y al menos la mitad de la noche.", "Echo 所说的“正常”，是之前最多 14 个夜晚的中位数；这些夜晚 Echo 看到呼吸 30 分钟以上，且至少占半个夜晚。", "Mức “bình thường” của Echo là giá trị giữa của tối đa 14 đêm trước đó mà Echo thấy nhịp thở từ 30 phút trở lên và ít nhất nửa đêm."),
 ("A night is flagged when its average is 3 or more breaths per minute above normal. Two flagged nights in a row gets a stronger message, because a breathing rate that stays high can be an early sign of illness.", "Una noche se marca cuando su promedio está 3 o más respiraciones por minuto por encima de lo normal. Dos noches marcadas seguidas reciben un mensaje más fuerte, porque una frecuencia respiratoria que se mantiene alta puede ser una señal temprana de enfermedad.", "当某晚的平均值比正常高 3 次/分钟或以上时会被标记。连续两晚被标记会显示更明确的提醒，因为呼吸频率持续偏高可能是生病的早期迹象。", "Một đêm được đánh dấu khi trung bình cao hơn bình thường từ 3 nhịp/phút trở lên. Hai đêm liên tiếp bị đánh dấu sẽ có thông báo mạnh hơn, vì nhịp thở cao kéo dài có thể là dấu hiệu sớm của bệnh."),
 ("This person’s normal", "Lo normal para esta persona", "此人的正常值", "Mức bình thường của người này"),
+# ---- photo
+("A warm bedside lamp next to a bed", "Una lámpara cálida junto a una cama", "床边一盏温暖的台灯", "Một chiếc đèn ngủ ấm áp cạnh giường"),
+("Photo: Samira Sadeqi / Unsplash", "Foto: Samira Sadeqi / Unsplash", "照片：Samira Sadeqi / Unsplash", "Ảnh: Samira Sadeqi / Unsplash"),
+("Go to Tonight", "Ir a Esta noche", "前往“今晚”", "Đến Tối nay"),
+("Photo by", "Foto de", "照片作者：", "Ảnh của"),
+("on Unsplash.", "en Unsplash.", "，来自 Unsplash。", "trên Unsplash."),
 ]
