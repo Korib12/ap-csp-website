@@ -359,4 +359,13 @@ S = [
 ("A sunlit corner with pillows", "Un rincón soleado con almohadas", "洒满阳光、放着枕头的角落", "Một góc đầy nắng với những chiếc gối"),
 ("Photos on Unsplash by", "Fotos en Unsplash de", "Unsplash 照片作者：", "Ảnh trên Unsplash của"),
 ("and Julia.", "y Julia.", "和 Julia。", "và Julia."),
+("Two older people holding hands", "Dos personas mayores tomadas de la mano", "两位长者握着手", "Hai người lớn tuổi nắm tay nhau"),
+("A stethoscope hanging in warm sunlight", "Un estetoscopio colgado bajo la luz cálida del sol", "温暖阳光下挂着的听诊器", "Chiếc ống nghe treo dưới nắng ấm"),
+("A steaming cup of coffee in the morning", "Una taza de café humeante por la mañana", "早晨一杯冒着热气的咖啡", "Một tách cà phê bốc khói buổi sáng"),
+("A phone charging on a nightstand", "Un teléfono cargándose en la mesita de noche", "床头柜上正在充电的手机", "Điện thoại đang sạc trên tủ đầu giường"),
+("Photo: Joshua Hoehne / Unsplash", "Foto: Joshua Hoehne / Unsplash", "照片：Joshua Hoehne / Unsplash", "Ảnh: Joshua Hoehne / Unsplash"),
+("Photo: Oluwaseyi Johnson / Unsplash", "Foto: Oluwaseyi Johnson / Unsplash", "照片：Oluwaseyi Johnson / Unsplash", "Ảnh: Oluwaseyi Johnson / Unsplash"),
+("Photo: Tabitha Turner / Unsplash", "Foto: Tabitha Turner / Unsplash", "照片：Tabitha Turner / Unsplash", "Ảnh: Tabitha Turner / Unsplash"),
+("Photo: Charmil Gandhi / Unsplash", "Foto: Charmil Gandhi / Unsplash", "照片：Charmil Gandhi / Unsplash", "Ảnh: Charmil Gandhi / Unsplash"),
+("Photo: Samira Sadeqi / Unsplash", "Foto: Samira Sadeqi / Unsplash", "照片：Samira Sadeqi / Unsplash", "Ảnh: Samira Sadeqi / Unsplash"),
 ]
