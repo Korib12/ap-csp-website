@@ -452,7 +452,7 @@
 
   /* ---------- Settings: grouped list ---------- */
   .shead { margin: 22px 6px 8px; font-size: 13px; font-weight: 600; color: var(--dim); }
-  .sfoot { margin: 8px 6px 0; font-size: 12px; line-height: 1.5; color: var(--faint); }
+  .sfoot { margin: 8px 6px 0; font-size: 12px; line-height: 1.5; color: var(--dim); }
   .sgroup { border-radius: 20px; overflow: hidden; }
   .srow { appearance: none; width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border: none; background: transparent; font: inherit; color: var(--ink); text-align: left; cursor: pointer; position: relative; }
   .srow + .srow::before { content: ""; position: absolute; top: 0; left: 56px; right: 0; height: 1px; background: rgba(35,49,47,.1); }
@@ -502,6 +502,23 @@
     border-bottom: 1px solid rgba(35,49,47,.08); opacity: 0; transform: translateY(-6px); transition: opacity .25s, transform .25s; pointer-events: none; }
   .topbar.show { opacity: 1; transform: none; }
 
+  /* ---------- Blurred photo behind each tab + film grain ---------- */
+  /* tiny pre-blurred copies (about 1 KB each) of the photos, stretched to fill the screen */
+  .tabbgs { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .tabbgs i { position: absolute; inset: -8%; background-size: cover; background-position: center; opacity: 0; transition: opacity .9s ease; filter: saturate(1.15); animation: bgbreathe 24s ease-in-out infinite alternate; }
+  .tabbgs i.on { opacity: 1; }
+  .tabbgs::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(246,237,221,.66) 0%, rgba(246,237,221,.5) 45%, rgba(246,237,221,.68) 100%); }
+  .tabbgs i[data-for="tonight"]  { background-image: url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAwAEADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5oFTR9auf2ZKP4TSx6fKWxtNXzIlRZo6E375a9a0A/uF+leaaLp0iSqSpr1DQ4ysCivJxuux7OA03NmNyKtKxZarxRMx4FX0gdUzg14OIU7e6e9RlDqU3Q81l3uVNbEmckYrLv0JzxWFD2ilqdFVwa0OVbSIW6KKntPD0bNnaKtI4U8mtvS5kOOlfSOckfLqEWY0mkpARtUV0mhWJZBxTblFkkGK6HRVjijGcUOPPuUpcmxesNKUkFhVzULaG3tznA4p8d9Ei8MK4vxp4g8pGVXpqlF6B7aS1LsHlT3BUEdanvNIDrkCuM8J6m1xdgs3evUbeRHhXJHSs3QijVYiT1R4KL0tWlpt4ysOaow2ODWhb2m3GK3lY5Ip3NyG73YNLf659kg4bGBVe0gOK5bxlMYo2ANKmruxVR2Vy1L43dXI3/rXO674iN4eWriLi4Yynk1GZWPeu2NJI45VWz0Hw1rq2jglq7iHxwioBvH514Qk7r0JqUXcv941MqCbuXHENKx//2Q==); }
+  .tabbgs i[data-for="reports"]  { background-image: url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCABgAEADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDx+S3+Wqgh+etiVH29KpiJt/SvIjI9ySNPSrXIFbQtQBVPSI3IGAa2/IkK9DXFUk+Y66a90zXtwKjEYFaLWsh7GoXtJB2NSpFWKEuAKyrtwK3TaO/GKy9Ts2j6itqbVzGotDuLrw2FjJ21gNo+Ljbt716td3VoYj8y1yctxai8zuXrXPTlMltMteHPDW9FJWumk8NokeStWNA1S0SJQGXNdE80dzD+7wazmpbscZ9EcIdIjDkYFOl0BXjJC1vS2riYnHFadrCDHgio1NHKx5udH8uYgrWB4msAiHAr1G/t1844Fch4rtcxnitaUveJk7o8quPEF/tIJaqC6jfTSbhurp76ytzJtUCt3QdAglQMVFd/1iEVexw/V5vqcdp+t38EyBiwGa9y+H9+95bp5hzx3rzHxHpkNrINqgV3nw1lWONcmirKNSF0hQjKErM9LmtV25xUCJgGrEl0jIBkVCjAg157R1JmLfL++rmPEyAxV1N//rTXG+KpisZogtS76HjkN/JJMCxPWvRfDOoKsABPauLfSvI5IqSG9NqMA4rqqKNRWQQi47m14vuVd8g1Y8La19mjADVwet6sZDy1N0bUDnGa2jSap2OeUl7Q9ttPEjO4Bauns9Yj8jczCvEbW9YMCCa6AahObQ7Selcvs3c1lJJaHe3GswyTkbhXM+LLqNoiQRXAtqd0l7yWxmp9Xv5JbYbielaKjZmPtbo3NXjTyiRivPdYuPKZua67Ur8NEQDXnfiGQszEVWEp33N68+VaGPe3hkkxmt3w3bvMy4rjSx87mu08L6gkG3cRXpVo8sNDzaU+ad2el6PonmIpYV0P9nxw25DDtWJouvRCNRkVsyajHcwkBhXkScr6no8qa0OZ1C2hEzEAcVyuv3ixAqDXSau4j3nNeaeI7otMea6qEednPWfIjp4HadOTWHr0aqpqG21jy1xms/Ur43BPNb06UlIVSqpRsYki/vKu2bMhGDUO3JzVq2XmuuT0OWnDU37C+kjA+Y10VjrDonLGuPh4xV1ZNqVwVIJnq09DX1XVmkBGa4nVJTI5NaNzKSTzWVccmt6EFA5cT7x//9k=); }
+  .tabbgs i[data-for="trends"]   { background-image: url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCABVAEADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5eoFFPRcmmUJS1Otux7VKtox7VPMh2KgFOxV1bJ/SnfYX9KXMh8rKGKaRV57Nx2qIW7Z6UcyCxSq5Zx7mHFVFGWFdf4V0dr11wM0TdkKKuyG1tMgcVpQWAPauzXws8UQbbTrfRm3gba4p1TpjTOZh0sH+GrS6OCPu13th4ceRQQh/KtJPDTj+A1zyqSN1TR5Vc6L8pwtZT6UVc/LXtknhpiv3P0rNm8JuWOEP5U41pIUqSPm6L74r1b4cyxxMhfFeUw/6wV6V4It5JduzNd+I+E5KO57JLe28kAUY6VBZRRPODgdax47CdQCc1sabbyKy9a8xvU9BRVj0PQbKFohkCt0aZER90Vz/AIeEiquc119vkqM1tFXMZOxR/sqI/wAIpy6NCf4RWmoqdBVqCIcmfm3D/rBXsXwvCFk3V45GcOK9L+H18IZFBNdlZXRz0nZnuF2UCKABVvSY1cjise2nW4jU5rZsJFixXCoW3Oxzvsd3o8KLGOlbSbR0rgBr6WyYLVJb+LI2fBcVSZDR36kVMlclb+IoXA+cVo2+tRP0YVSZDifnmOtdL4cvDBKvNc1Wjpu7zBiu9o5Ue4eH9W3RLlq6eLURt615RocskaL1rpYL1+Oa5aiTOinJmzrl+4B2saxLfUpg33jVidxMnNVVhVTWEdDaWpsW2tTqB8xrYsPETqfmf9a5CRgi8Vlz3jxv8uaLXYr2PIK2tCQNMufWiivQlsccdz0fTYE8leKvqgHSiiuGTZ1RQ4EipVGaKKhloZLGCKozW6HrRRU3KaP/2Q==); }
+  .tabbgs i[data-for="settings"] { background-image: url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCABgAEADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDwOCPFXI1pqLVhFrBs1SLumP5UgNdJJe7rfGe1czbRksMVoEkALWU59Eb06V/eZE0TTz8DvXRWUIhtvm44pui2YZd5FR67cG3UheK2prlRy1588rIytSZfNJzXP6hKO1Pnu2kc5NUbj5jQ2RYviPHapo0JIFXZLfaKW3g5yawdTS56HsXexLBGI49xquk3mXIUetTXkmF2rUOl25a5BPrU04uT5mVXmqceVHcaWmy1B9qwfEa7w1dTYW5+zAe1ZusWYMbZrqaZ5fMrnld0xjlNQtNmtLWLbbM2Kx5FKmlYts7guHNJNMsUdUkl2DJNZt9dlyQDXFy3dj2HPlV2aEc6yOcmtXTXVZlNchBI28AGus0mymki3gGt+ZU0cDi6rOw/tWKC2HIziue1HXkk3KDXPa9dTQEoSRXN/anZutbRndXOaVLldjav5hK5NY1z1p4mOOTTG+egLF29usLhTWX5zMxqVzv60JEtYq0TvknNk9g/75d3rXq3hy5tlsMNjOK8oQBWGK2tPvpEXaGOKyqx5zSnHkLPjHbJcMY+lctFAxPSuknH2hstzVzT9NR2BIpxqcqsEsPzO6ObTT5X6Kav2ukSHqprvrDS4NoyBWkumwgcAV1Q95HFUj7N6nhyvQ0xFQBqa5qLGnOy1HNk81fiugg61heZtpyzEnrQ4XBVbHWWM/mOBmuz0q1LxgrXmumXIWRea9W8JzrLEoOKzdK7N44jlRaSOSM96nEzqK3vsiOucVC+nqe1dNOLijirVVN3PmkPSM/FNApj0rBcazc0gbFLtzSFaogntpSJBzXpfgu+2lATXl0XDV1nhy6Mci80WGj3ezuA8QOamaYVzmh3RkhXntWo8lao53uf/9k=); }
+  @keyframes bgbreathe { from { transform: scale(1); } to { transform: scale(1.08) translate(-1.5%, 1%); } }
+  .ambient { opacity: .35; }
+  .grain { position: fixed; inset: -50%; z-index: 2; pointer-events: none; opacity: .07; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    animation: grain 1.2s steps(6) infinite; }
+  @keyframes grain { 0% { transform: translate(0, 0); } 20% { transform: translate(-4%, 3%); } 40% { transform: translate(3%, -5%); } 60% { transform: translate(-6%, -2%); } 80% { transform: translate(5%, 4%); } 100% { transform: translate(0, 0); } }
+
   /* While Echo is listening, nothing animates: the audio work gets the phone to itself. */
   body.listening *, body.listening *::before, body.listening *::after { animation: none !important; transition: none !important; }
   @media (prefers-reduced-motion: reduce) {
@@ -514,6 +531,8 @@
 </head>
 <body>
 <div class="ambient" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+<div class="tabbgs" aria-hidden="true"><i data-for="tonight"></i><i data-for="reports"></i><i data-for="trends"></i><i data-for="settings"></i></div>
+<div class="grain" aria-hidden="true"></div>
 <div class="topbar" id="topbar" aria-hidden="true"><span id="topbarTitle"></span></div>
 <!-- ==================== INTRO (first open, and "How Echo works") ==================== -->
 <div id="intro" class="gone" aria-label="How Echo works">
@@ -959,7 +978,7 @@
   document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
     document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + b.dataset.tab));
-    movePill(b); window.scrollTo(0, 0); updateTopbar();
+    movePill(b); setTabBg(b.dataset.tab); window.scrollTo(0, 0); updateTopbar();
     if (b.dataset.tab === 'reports') { renderReports(); animateIn($('reportsBody')); }
     if (b.dataset.tab === 'trends') { renderTrends(); animateIn($('trendsBody')); }
     if (b.dataset.tab === 'tonight' && running) sizeWave();
@@ -970,12 +989,14 @@
   let helpFrom = 'settings';
   function openHelp() {
     const cur = document.querySelector('nav button.on'); helpFrom = cur ? cur.dataset.tab : 'settings';
-    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-help'));
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-help')); setTabBg('settings');
     window.scrollTo(0, 0);
   }
   document.addEventListener('click', e => { if (e.target.closest('[data-go="help"]')) openHelp(); });
   $('helpBack').addEventListener('click', () => document.querySelector('nav button[data-tab="' + helpFrom + '"]').click());
 
+  function setTabBg(tab) { document.querySelectorAll('.tabbgs i').forEach(i => i.classList.toggle('on', i.dataset.for === tab)); }
+  setTabBg('tonight');
   function movePill(b) {
     const btns = [...document.querySelectorAll('nav button')];
     $('navPill').style.transform = 'translateX(' + (btns.indexOf(b) * 100) + '%)';
