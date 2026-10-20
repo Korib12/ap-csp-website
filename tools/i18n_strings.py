@@ -352,4 +352,11 @@ S = [
 ("Go to Tonight", "Ir a Esta noche", "前往“今晚”", "Đến Tối nay"),
 ("Photo by", "Foto de", "照片作者：", "Ảnh của"),
 ("on Unsplash.", "en Unsplash.", "，来自 Unsplash。", "trên Unsplash."),
+("Photo: Polina Kuzovkova / Unsplash", "Foto: Polina Kuzovkova / Unsplash", "照片：Polina Kuzovkova / Unsplash", "Ảnh: Polina Kuzovkova / Unsplash"),
+("Photo: Paulina Herpel / Unsplash", "Foto: Paulina Herpel / Unsplash", "照片：Paulina Herpel / Unsplash", "Ảnh: Paulina Herpel / Unsplash"),
+("A lamp on a nightstand right next to the pillow", "Una lámpara en la mesita de noche, junto a la almohada", "枕头旁床头柜上的一盏台灯", "Một chiếc đèn trên tủ đầu giường, ngay cạnh gối"),
+("A dim bedroom at night", "Un dormitorio en penumbra por la noche", "夜里昏暗的卧室", "Phòng ngủ mờ tối vào ban đêm"),
+("A sunlit corner with pillows", "Un rincón soleado con almohadas", "洒满阳光、放着枕头的角落", "Một góc đầy nắng với những chiếc gối"),
+("Photos on Unsplash by", "Fotos en Unsplash de", "Unsplash 照片作者：", "Ảnh trên Unsplash của"),
+("and Julia.", "y Julia.", "和 Julia。", "và Julia."),
 ]
