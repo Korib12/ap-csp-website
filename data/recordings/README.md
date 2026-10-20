@@ -5,6 +5,7 @@ Replay any file through the app engine with `node tools/replay.js <file>` (needs
 
 | File | What happened | Recorded | Rate while recording |
 |---|---|---|---|
+| 2026-10-19_empty-then-25cm-then-40cm.json | One run: empty room (~45–100 s), breathing at about 25 cm (10 in, ~105–130 s), then about 40 cm (16 in, ~150–180 s) | 27% (empty part 0%) | 19–21 close, 17–18 farther |
 | 2026-10-19_empty-room.json | Nobody in the room (205 s) | 0% | — |
 | 2026-10-18_standing-in-room_breathing-at-start.json | Breathing at the phone for a minute, then standing and moving in the room (189 s) | 17% | 19 during the breathing; a few wrong readings (6–9) while standing |
 | 2026-10-19_10cm_tshirt_breathing.json | Side, 10 cm, T-shirt (99 s) | 73% | 15–17 (one 7) |
