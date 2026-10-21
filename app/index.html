@@ -1603,7 +1603,8 @@
     lastBand = bandSNR();
     const breathingNow = lastBreathAgo < 10;
     const pm = pmBuf.length ? median(pmBuf) : 0;
-    const good = breathingNow && lastBand >= BAND_MIN && (clar >= CLAR_MIN || lastSNR >= SNR_MIN || pm >= PM_MIN);
+    rhythm = motionRhythm(d, M);
+    const good = breathingNow && lastBand >= BAND_MIN && (clar >= CLAR_MIN || lastSNR >= SNR_MIN || pm >= PM_MIN || rhythm.ok);
     goodStreak = good ? goodStreak + dt : 0;
 
     if (quietPause(now, d, M)) {
@@ -1716,6 +1717,29 @@
       curPause.len = len; return true;
     }
     return false;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Second way to see breathing clearly (added Oct 20): Echo took up to 100 s to start on
+  // clean recordings. Breathing = motion that stands well above the fast jitter AND repeats
+  // with a steady rhythm (2-8 s per breath). Never true in the empty-room recordings.
+  // ---------------------------------------------------------------------------
+  const R_SNR = 4, R_AC = 0.5;
+  let rhythm = { snr: 0, ac: 0, ok: false };
+  function motionRhythm(d, M) {
+    const H = SLOW_HZ * 20, W = SLOW_HZ * 8;
+    if (M < H + 4) return { snr: 0, ac: 0, ok: false };
+    let ss = 0; for (let k = M - H; k < M - 2; k++) { let m = 0; for (let q = k - 2; q <= k + 2; q++) m += d[q]; ss += (d[k] - m / 5) ** 2; }
+    const jit = Math.sqrt(ss / (H - 2)) || 1e-12;
+    const ch = []; for (let k = M - H; k + W <= M; k += 2 * SLOW_HZ) ch.push(rmsDet(d, k, k + W));
+    const mot = median(ch), snr = mot / jit;
+    // rhythm: autocorrelation of the last 20 s after removing a 6 s moving average
+    const a = []; for (let k = M - H + 30; k < M - 30; k++) { let m = 0; for (let q = k - 30; q < k + 30; q++) m += d[q]; a.push(d[k] - m / 60); }
+    const mu = a.reduce((x, y) => x + y, 0) / a.length; for (let i = 0; i < a.length; i++) a[i] -= mu;
+    let r0 = 0; for (const v of a) r0 += v * v; let ac = 0;
+    for (let lag = 2 * SLOW_HZ; lag <= 8 * SLOW_HZ && lag < a.length; lag++) { let r = 0; for (let i = 0; i + lag < a.length; i++) r += a[i] * a[i + lag]; ac = Math.max(ac, r / (r0 || 1e-12)); }
+    const moving = rmsDet(d, M - W, M) >= 0.5 * mot;      // still breathing right now (not mid-hold)
+    return { snr, ac, ok: snr >= R_SNR && ac >= R_AC && moving };
   }
 
   function closePause() {
@@ -2835,7 +2859,7 @@
   window.addEventListener('scroll', updateTopbar, { passive: true });
 
   // test hook so automated checks can read state (harmless in normal use)
-  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, band: lastBand, pm: pmBuf.length ? median(pmBuf) : 0, snoreSec, snoreNow, outNow, audioDrops, outOfBed: sessionLog ? sessionLog.outOfBed.slice() : null, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null, openPause: curPause ? [Math.round(curPause.s), Math.round(curPause.len)] : null }; } };
+  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, band: lastBand, pm: pmBuf.length ? median(pmBuf) : 0, snoreSec, snoreNow, outNow, audioDrops, rhythm, outOfBed: sessionLog ? sessionLog.outOfBed.slice() : null, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null, openPause: curPause ? [Math.round(curPause.s), Math.round(curPause.len)] : null }; } };
 
   // ---------------------------------------------------------------------------
   // Intro: a particle story that scrolls from night to morning.
