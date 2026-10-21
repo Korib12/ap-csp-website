@@ -377,4 +377,9 @@ S = [
 ("Snoring: {d}", "Ronquidos: {d}", "打鼾：{d}", "Ngáy: {d}"),
 ("Audio dropouts: {#n}", "Cortes de audio: {#n}", "音频中断：{#n}", "Mất âm thanh: {#n}"),
 ("Out of bed or out of view: {t}", "Fuera de la cama o fuera de vista: {t}", "离床或不在视野内：{t}", "Rời giường hoặc ngoài tầm nhìn: {t}"),
+("Experimental", "Experimental", "实验性", "Thử nghiệm"),
+("Snoring (experimental)", "Ronquidos (experimental)", "打鼾（实验性）", "Ngáy (thử nghiệm)"),
+("Out of bed or out of view (experimental)", "Fuera de la cama o fuera de vista (experimental)", "离床或不在视野内（实验性）", "Rời giường hoặc ngoài tầm nhìn (thử nghiệm)"),
+("Snoring (experimental): {d}", "Ronquidos (experimental): {d}", "打鼾（实验性）：{d}", "Ngáy (thử nghiệm): {d}"),
+("Out of bed or out of view (experimental): {t}", "Fuera de la cama o fuera de vista (experimental): {t}", "离床或不在视野内（实验性）：{t}", "Rời giường hoặc ngoài tầm nhìn (thử nghiệm): {t}"),
 ]

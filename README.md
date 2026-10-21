@@ -1,84 +1,103 @@
 # Echo
 
-Echo turns a phone into a contactless breathing monitor using sonar. The phone's speaker plays an inaudible tone (about 16–20 kHz), the microphone listens to the echo off the person's chest, and the app tracks the echo's phase to measure chest movement down to fractions of a millimeter. No camera, no wearable, and it works in the dark.
+**Echo turns a phone into a contactless breathing monitor using sonar.** The phone's speaker plays a steady high tone (about 16.6–17 kHz), the microphone listens to the echo off the person's chest or belly, and Echo tracks tiny changes in that echo to measure breathing, with nothing to wear and no camera.
+
+**Try it:** https://korib12.github.io/ap-csp-website/app/ (open on a phone in Safari or Chrome and allow the microphone).
+**Demo without a microphone:** https://korib12.github.io/ap-csp-website/app/?sim=pause&speed=5
 
 Built for the 2026 Congressional App Challenge (California's 14th district).
 
-Echo is not a medical device.
+> Echo is not a medical device. It does not diagnose anything. Talk to a doctor about any concerns.
+
+## Who it's for
+
+People who want to know what their breathing does at night but have never had a sleep test, for example someone who snores or wakes up tired. Sleep studies are expensive and most breathing problems during sleep are thought to go undiagnosed. Echo uses a phone people already own and keeps everything on that phone.
+
+## What it does
+
+| | |
+|---|---|
+| **Tonight** | One tap to start. An aim check helps point the phone. Live breathing rate and breathing wave. A dim night screen. Echo saves the night every 30 seconds, so a dead battery or a closed tab doesn't lose it. |
+| **Reports** | A summary of each night: a one-sentence summary, a timeline of what Echo could see, the breathing rate through the night, pauses of 10 seconds or more, a data-confidence badge and a Share button. |
+| **Trends** | Learns the person's normal nightly breathing rate and flags nights well above it. |
+| **Science view** | The raw echo (I/Q plane) and the breathing spectrum, live. |
+| **Get help nearby** | When to talk to a doctor and where to find low-cost help. |
+| **Languages** | English, Spanish, Chinese (Simplified and Traditional) and Vietnamese. Translations are machine-made and still need a native-speaker check. |
+| **Snoring** *(experimental)* | Regular bursts of low, loud sound. Only tested on synthetic audio so far. |
+| **Out of bed or out of view** *(experimental)* | 90 seconds without seeing breathing after a stretch of clear breathing. Tested in simulation and on short real recordings. |
+
+## How it works
+
+1. **Send a tone.** The speaker plays a steady tone near 16.6 kHz (Echo picks the best frequency the phone can play and hear).
+2. **I/Q demodulation.** The microphone signal is multiplied by the cosine and sine of the tone, then averaged every 100 ms. What's left is the echo as a slowly moving point (I, Q).
+3. **Chest motion.** Still echoes (walls, the speaker leaking straight into the mic) sit at a fixed point, and the moving chest makes the echo swing around it. Echo turns that swing into chest displacement two ways (fitting a circle to the arc, and the main direction of motion) and keeps whichever shows the clearer rhythm. Slow drift is removed with a 10-second moving average.
+4. **Breathing rate.** A Fourier analysis of the last ~28 seconds finds the strongest rhythm between 5 and 36 breaths per minute. The number shown is the middle value of the last 20 seconds of readings, so one bad reading can't make it jump. Readings far from it, or under 8 per minute, stay out of the night's average.
+5. **Data only when it can see clearly.** Echo records only when breathing clearly stands out: strong breathing-band motion compared with fast noise, plus at least one of: a clean spectral peak, breaths well above the jitter, or breath-sized motion that repeats with a steady 2–8 second rhythm. Otherwise it says "Can't see breathing clearly" and records nothing. It doesn't guess.
+6. **Pauses.** A pause of 10 seconds or more is logged two ways:
+   - **Breath counting:** no breath found for 10 s, right after 20+ s of clear breathing, with no big movement before it.
+   - **Quiet chest:** the chest motion goes still (under 40% of the breathing just before it) after breathing that was clear and full right up to the stop, with no jolt at the start (a jolt means rolling over, bumping the phone or getting up). A "pause" with no breathing back within 60 s is dropped as "probably out of view".
+
+## How we tested it
+
+**Real recordings.** 17 raw recordings (the last 4 minutes of the echo) from real rooms are in [`data/recordings/`](data/recordings/). They cover breathing at 10–40 cm, T-shirt and hoodies, empty rooms, a misaimed phone, rolling over, leaving the room and breath holds. Every change to the breathing engine is replayed against all of them with `tools/replay.js`.
+
+| Test | Result |
+|---|---|
+| A full empty-room recording and a misaimed phone | 0% "seen", no breathing rate, no pauses |
+| Clean breath holds of 15 and 20 s (2 recordings) | Both logged as pauses (19 s and 18 s) |
+| 8 s breath hold | Logged as 12 s. Pause lengths are about ±4 s. |
+| Rolling over, turning away, leaving the room | No false pauses |
+| Breath hold right after bumping the phone | Not logged (on purpose: Echo distrusts motion right after a jolt) |
+| Breath hold recorded on a phone with a weak mic | Not logged (signal too weak) |
+
+**Breathing-rate accuracy.** Early check against timed breathing (phone about 20 cm away, Oct 13): 10 → 10, 15 → 15, 30 → 29 breaths/min. The app now has a built-in **accuracy test** (Settings → testing tools): a breathing guide at 10, 15 and 20 breaths/min, 2 minutes each, that compares Echo's readings with the guide. *Results: to be added.*
+
+**Overnight.** *To be added: a full night on an iPhone 15 Pro Max (does it keep running, battery used, how much of the night Echo could see).*
+
+**Simulation.** `?sim=` modes (steady, irregular, pause, waxing-and-waning, rolls over, empty room, walks away, gets up) run 5+ minutes each: steady 97% seen, 3 of 3 pauses logged, 0 false pauses when rolling over, 0% seen in an empty room.
+
+## Limitations (honest list)
+
+- **Aim matters.** At this wavelength (about 2 cm), sound reflects off the body like a mirror. The bottom edge of the phone has to point at the chest or belly, about 10–25 cm away. Echo's aim check helps. When the person moves out of the beam, Echo reports "can't see" instead of guessing.
+- **Every threshold was tuned on a small set of recordings** from one household, so results on new people and rooms may be worse.
+- **Pause detection has been confirmed on breath holds lying on the back.** Holds while lying on the side haven't been tested yet.
+- **Some people can hear the tone,** especially young people and pets.
+- **Phones differ.** One phone with a muffled mic gave a much weaker signal.
+- **Snoring and out-of-bed tracking are experimental.**
+
+## Privacy
+
+Everything runs on the phone. No audio is recorded or uploaded, there are no accounts, and saved nights stay in that phone's browser storage. Echo only keeps the breathing numbers it measures.
+
+## Running it yourself
+
+The app is one file, `app/index.html`, with no server code. The microphone needs `https` or `localhost`:
+
+```
+python3 -m http.server 8000      # then open http://localhost:8000/app/
+```
+
+**Demo mode** (no microphone): add `?sim=steady`, `?sim=pause`, `?sim=wax`, `?sim=irregular`, `?sim=roll`, `?sim=empty`, `?sim=away` or `?sim=bathroom`, plus `&speed=5` to run 5× faster.
+
+**Replay a real recording:** `node tools/replay.js data/recordings/<file>.json` (needs Playwright).
+
+**Other tests:** `node tests/sim_rate.js` (breathing rate across motion sizes, rates and noise) and `node tests/sim_pattern.js` (steady, irregular, sigh and waxing-and-waning patterns).
 
 ## What's here
 
 | Path | What it is |
 |---|---|
-| `app/index.html` | **The Echo app.** **Tonight:** one-tap start, automatic tone tuning, live breathing, a dim bedside-clock night screen and the pause alarm. **Reports:** a summary of each night with a breathing-rate graph, pause times and a Share button. **Trends:** learns the person's normal nightly breathing rate and flags nights 3+ breaths/min above it. **Settings:** alarm time, sound and a family contact |
-| `app/echo-breathing-scope.html` | Engineering view: live breathing rate, chest-motion wave, carrier graph and the breathing pattern detector |
-| `tools/echo-sonar-test.html` | The first hardware test: checks that a phone can send and hear the ultrasonic tone |
-| `tests/` | Simulation tests for the signal processing (run with Node) |
-
-## How it works
-
-1. **Emit a carrier.** The speaker plays a steady tone near 16.6 kHz.
-2. **I/Q demodulation.** The raw microphone signal is multiplied by the cosine and sine of the carrier, then averaged every 100 ms (a boxcar low-pass filter). That leaves the echo as a slowly moving point (I, Q).
-3. **Phase tracking with a circle fit.** Static echoes (walls, direct speaker-to-mic leak) set a fixed center, and the chest echo rotates around it. The echo's phase equals 4π × distance ÷ wavelength, so the unwrapped angle around the fitted circle is chest displacement.
-4. **Breathing rate.** A windowed Fourier analysis of the last ~28 s of displacement finds the strongest rhythm between 5 and 36 breaths per minute.
-5. **Breathing pattern.** Each breath is found and measured. The detector reports steady, irregular, or a repeating waxing-and-waning pattern (breaths growing deeper, then shallower, then pausing).
-
-## Results so far
-
-Accuracy against timed breathing (phone about 20 cm from the chest, Oct 13, 2026):
-
-| Real pace | Echo reading |
-|---|---|
-| 10 breaths/min | 10 |
-| 15 breaths/min | 15 |
-| 30 breaths/min | 29 |
-
-## Running it
-
-The pages need the microphone, which browsers only allow on `https` or `localhost`.
-
-```
-cd echo-breathing-monitor
-python3 -m http.server 8000
-ngrok http 8000          # in a second terminal, for an https link to open on a phone
-```
-
-Then open `https://<your-ngrok-link>/app/index.html` on the phone (or `app/echo-breathing-scope.html` for the engineering view).
-
-**Simulation mode** (no microphone): add `?sim=steady`, `?sim=pause`, `?sim=wax` or `?sim=irregular` to the link, plus `&speed=10` to run 10× faster. `pause` breathes normally, then stops for 40 s every 2 minutes, which should set off the alarm.
-
-## Saved nights, Reports and Trends
-
-Every session is saved on the phone only (browser storage). Each saved night keeps the median breathing rate for every 30 seconds, every pause of 10 s or more, alarms, and whether a waxing-and-waning pattern appeared.
-
-Trends uses nights of 30 minutes or more. A night's "normal" is the median of the nightly averages from up to 14 earlier nights (at least 3 needed). A night is flagged when its average is 3 or more breaths/min above normal. The Trends tab can load 14 labeled sample nights for demos.
-
-## Data-only by default
-
-Real-person testing (Oct 17) showed sonar reflects off the body like a mirror at this wavelength (about 2 cm), so the phone must face the chest directly. It works well for side sleepers with the phone at mattress height facing the chest, poorly when the phone is beside someone lying on their back, and poorly through a blanket hanging in front of a side sleeper.
-
-So Echo records data for a morning report instead of acting as an alarm:
-
-- **Seeing:** breaths are found and stand out clearly (spectral clarity 6+ or breath-to-jitter ratio 12+). Breathing rate is recorded.
-- **Pause:** breaths stop with no big movement just before. Logged as a pause.
-- **Lost:** breaths stop right after a big movement (rolling over), or the signal is unclear. Nothing is recorded and nothing is guessed.
-
-Each night reports how much of it Echo could see. Nights where breathing was seen less than half the time are left out of Trends. Alerts are an optional, experimental setting.
-
-In simulation (5+ minutes each): steady 97% seen, irregular 92%, stops logged correctly (3 of 3), rolling over gave 0 false pauses and 0 false alarms.
-
-## Pause alarm (optional, experimental)
-
-Echo arms itself once it has seen steady breathing (6 or more breaths in the last minute). While armed, it sounds an alarm if no breath is detected for the set time (15, 20 or 30 s, default 20). In simulation, steady, irregular and waxing-and-waning breathing ran 5 minutes each with no alarms, and breathing that stopped at 70, 190 and 310 s set off alarms at 93, 212 and 331 s.
-
-## Tests
-
-```
-cd tests
-node sim_rate.js       # breathing rate across chest motion sizes, rates, and noise
-node sim_pattern.js    # pattern detector: steady, irregular, sigh, waxing-and-waning
-```
+| `app/index.html` | The Echo app (one file: HTML, CSS, JavaScript) |
+| `app/echo-breathing-scope.html` | Early engineering view |
+| `tools/` | Replay tool, translation builder, first hardware test |
+| `tests/` | Simulation tests for the signal processing |
+| `data/recordings/` | Raw real-room recordings used for testing |
+| `data/echo-test-data.xlsx` | Test results spreadsheet |
+| `assets/photos/` | Photos (see credits) |
 
 ## Credits
 
-The breath-by-breath analysis and RMSSD regularity score are adapted from [PhysioMetrics](https://github.com/RyanSeanPhillips/PhysioMetrics) by Ryan Sean Phillips (MIT License). See `THIRD_PARTY_NOTICES.md`.
+- Breath-by-breath analysis and the RMSSD regularity score are adapted from [PhysioMetrics](https://github.com/RyanSeanPhillips/PhysioMetrics) by Ryan Sean Phillips (MIT License). See `THIRD_PARTY_NOTICES.md`.
+- Photos from Unsplash by Polina Kuzovkova, Charmil Gandhi, Jerry Wang, Julia, Samira Sadeqi, Sophie Lee-Tin-Yien, Archee Lal, Tabitha Turner, Paulina Herpel, Joshua Hoehne and Oluwaseyi Johnson. See `assets/photos/CREDITS.md`.
+- Intro animation uses [three.js](https://threejs.org) (MIT). Font: Bricolage Grotesque (SIL Open Font License).
+- Phone sonar for breathing builds on earlier research, such as the University of Washington's ApneaApp.
