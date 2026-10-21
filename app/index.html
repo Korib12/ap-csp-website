@@ -1543,6 +1543,7 @@
   // ---------------------------------------------------------------------------
   // Breathing rate
   // ---------------------------------------------------------------------------
+  let rateBuf = [], lastShownTick = -1e9;
   function updateRate() {
     if (!toneLocked) return;
     const est = estimateRate();
@@ -1552,8 +1553,15 @@
     clarBuf.push(est.prominence); if (clarBuf.length > 20) clarBuf.shift();   // last ~10 s
     pmBuf.push(est.peakMed); if (pmBuf.length > 20) pmBuf.shift();
     if (monState !== 'seeing' || est.bpm < 5 || est.bpm > 35) { $('bpm').textContent = '--'; $('bpm').classList.add('idle'); return; }
-    $('bpm').textContent = Math.round(est.bpm);
+    // A real breathing rate changes gradually, so show the middle value of the last ~20 s of
+    // readings: one sudden jump (19 -> 6) can't move it, a real change shows within ~10 s.
+    if (tick - lastShownTick > SLOW_HZ * 30) rateBuf = [];
+    rateBuf.push(est.bpm); if (rateBuf.length > 40) rateBuf.shift(); lastShownTick = tick;
+    const shown = median(rateBuf);
+    $('bpm').textContent = Math.round(shown);
     $('bpm').classList.remove('idle');
+    // readings far from that middle value, or very slow ones, stay out of the night's average
+    if (Math.abs(est.bpm - shown) > Math.max(4, 0.3 * shown) || est.bpm < 8) return;
     if (sessionLog && monState === 'seeing' && (est.prominence >= CLAR_MIN || est.peakMed >= PM_MIN) && lastBreathAgo < 6) winRates.push(est.bpm);
   }
 
@@ -1598,7 +1606,9 @@
     const good = breathingNow && lastBand >= BAND_MIN && (clar >= CLAR_MIN || lastSNR >= SNR_MIN || pm >= PM_MIN);
     goodStreak = good ? goodStreak + dt : 0;
 
-    if (good && (monState === 'seeing' || monState === 'pause' || goodStreak >= ENTER_SEC)) {
+    if (quietPause(now, d, M)) {
+      // a held breath found by the quiet-chest check (below); it decides when the pause ends
+    } else if (good && (monState === 'seeing' || monState === 'pause' || goodStreak >= ENTER_SEC)) {
       if (monState === 'pause') closePause();
       if (monState !== 'seeing') seeStreak = 0;
       monState = 'seeing'; everArmed = true; seeStreak += dt;
@@ -1628,6 +1638,7 @@
       if (monState !== 'starting') monState = 'lost';
     }
 
+    if (monState === 'seeing') lastSeeingSec = now;
     if (monState === 'seeing' || monState === 'pause') seenSec += dt;
     trackOutOfBed(now, dt);
     bucket[monState === 'seeing' ? 's' : monState === 'pause' ? 'p' : 'l'] += dt;
@@ -1639,11 +1650,11 @@
       setStatus('ok', 'Recording · breathing seen clearly'); hideCountdown();
       $('nightText').textContent = 'Recording · tap to open';
     } else if (monState === 'pause') {
-      const sec = Math.round(lastBreathAgo);
+      const ago = qp && qp.on ? now - qp.s : lastBreathAgo, sec = Math.round(ago);
       setStatus('wait', 'Pause in breathing · ' + sec + ' s');
       $('nightText').textContent = 'Pause in breathing · ' + sec + ' s';
       if (settings.alerts) {
-        if (lastBreathAgo >= settings.pauseSec) { triggerAlarm(sec); return; }
+        if (ago >= settings.pauseSec) { triggerAlarm(sec); return; }
         $('countdown').textContent = 'No breath detected for ' + sec + ' s. Alarm at ' + settings.pauseSec + ' s.';
         $('countdown').classList.add('show');
       }
@@ -1658,6 +1669,55 @@
     setStatus('wait', text); hideCountdown();
     $('nightText').textContent = "Can't see breathing clearly";
   }
+  // ---------------------------------------------------------------------------
+  // Quiet-chest pauses (added Oct 20, from real breath-hold recordings).
+  // Counting breaths missed real holds: tiny noise wiggles were counted as breaths.
+  // A held breath shows up instead as the chest motion going still compared with the
+  // breathing just before it. Only starts right after breathing Echo saw clearly, and a
+  // "pause" with no breathing back within 60 s is dropped (probably out of view).
+  // ---------------------------------------------------------------------------
+  const Q_RATIO = 0.4, Q_WIN = 8, Q_BACK = 0.6, Q_CLEAR = 5, Q_JIT_LO = 0.85, Q_JIT_HI = 2, Q_DEEP = 0.35, Q_TAPER = 0.7;
+  let qp = null, lastSeeingSec = -999;
+  function rmsDet(a, s, e) {   // RMS around a straight-line fit of a[s..e)
+    const n = e - s; let sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (let i = 0; i < n; i++) { const y = a[s + i]; sx += i; sy += y; sxx += i * i; sxy += i * y; }
+    const b = (n * sxy - sx * sy) / ((n * sxx - sx * sx) || 1), c = (sy - b * sx) / n;
+    let ss = 0; for (let i = 0; i < n; i++) { const r = a[s + i] - (c + b * i); ss += r * r; }
+    return Math.sqrt(ss / n);
+  }
+  function quietPause(now, d, M) {
+    const W = SLOW_HZ * Q_WIN;
+    if (M < SLOW_HZ * 48) { qp = null; return false; }
+    if (monState === 'pause' && !(qp && qp.on)) { qp = null; return false; }   // breath counting already caught this pause
+    if (!qp) {
+      if (now - lastSeeingSec > 20) return false;
+      const refs = []; for (let k = M - 48 * SLOW_HZ; k <= M - 20 * SLOW_HZ; k += 2 * SLOW_HZ) refs.push(rmsDet(d, k, k + W));
+      refs.sort((a, b) => a - b); const ref = refs[Math.floor(refs.length * 0.75)];
+      if (!(ref > 0) || rmsDet(d, M - W, M) >= Q_RATIO * ref) return false;
+      // fast jitter (what's left after a 0.5 s smoothing): before the quiet vs right at its start
+      const o = M - W, hf = (a, b) => { let ss = 0; for (let k = a; k < b; k++) { let m = 0; for (let q = k - 2; q <= k + 2; q++) m += d[q]; ss += (d[k] - m / 5) ** 2; } return Math.sqrt(ss / (b - a)); };
+      const hfRef = hf(o - 30 * SLOW_HZ, o - 8 * SLOW_HZ), jit = hf(o - 5 * SLOW_HZ, o + 2 * SLOW_HZ) / (hfRef || 1e-12);
+      const clear = ref / (hfRef || 1e-12) >= Q_CLEAR;               // breathing before stood well above the jitter
+      const full = rmsDet(d, o - W, o) >= Q_TAPER * ref;              // full breaths right up to the stop (a slow fade is left to breath counting)
+      qp = { s: now - Q_WIN, ref, on: false, blocked: !clear || !full || jit < Q_JIT_LO || jit > Q_JIT_HI };   // jolt at the start = rolled / moved / got up
+    }
+    const len = now - qp.s;
+    if (rmsDet(d, M - 4 * SLOW_HZ, M) >= Q_BACK * qp.ref) {        // breathing-sized motion is back
+      if (qp.on) { curPause.len = Math.max(10, len - 3); closePause(); monState = 'seeing'; seeStreak = 0; }
+      qp = null; return false;
+    }
+    if (len > 60) { if (qp.on) { curPause = null; monState = 'lost'; } qp = null; lastSeeingSec = -999; return false; }
+    if (qp.blocked) return false;
+    if (len >= 10) {
+      if (!qp.on) {
+        if (rmsDet(d, M - 10 * SLOW_HZ, M) > Q_DEEP * qp.ref) { qp.blocked = true; return false; }   // not still enough for a held breath
+        qp.on = true; monState = 'pause'; curPause = { s: qp.s, len, alarm: false };
+      }
+      curPause.len = len; return true;
+    }
+    return false;
+  }
+
   function closePause() {
     if (!curPause) return;
     sessionLog && sessionLog.pauses.push([Math.round(curPause.s), Math.round(curPause.len), curPause.alarm ? 1 : 0]);
@@ -1850,7 +1910,7 @@
     running = true; alarmOn = false;
     sessionLog = { start: Date.now(), timeline: [], pauses: [], alarms: 0, waxWane: false, states: '', snore: '', outOfBed: [] };
     everArmed = false; curPause = null; sessTicks = 0; winRates = []; tRates = []; tClars = [];
-    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; goodStreak = 0; seeStreak = 0; lastBand = 0; pmBuf = []; lastFit = null; lastSpec = null; audioDrops = 0; lastPT = null; aimBand = 0; aimGoodSec = 0; aimDone = false; $('aim').hidden = false; $('aimFill').style.width = '0'; $('aimWord').textContent = 'Measuring…'; bucket = { s: 0, p: 0, l: 0, z: 0 }; bandSeen = []; snoreLv = []; snoreBursts = []; snoreIn = false; snoreSec = 0; snoreNow = false; lowBandSec = 0; lastSeenSec = -999; seenTotalSec = 0; outNow = false; $('seenV').textContent = '—';
+    monState = 'starting'; clarBuf = []; lastMoveSec = -999; seenSec = 0; lastCheckSec = 0; goodStreak = 0; seeStreak = 0; lastBand = 0; pmBuf = []; lastFit = null; lastSpec = null; audioDrops = 0; lastPT = null; qp = null; lastSeeingSec = -999; rateBuf = []; lastShownTick = -1e9; aimBand = 0; aimGoodSec = 0; aimDone = false; $('aim').hidden = false; $('aimFill').style.width = '0'; $('aimWord').textContent = 'Measuring…'; bucket = { s: 0, p: 0, l: 0, z: 0 }; bandSeen = []; snoreLv = []; snoreBursts = []; snoreIn = false; snoreSec = 0; snoreNow = false; lowBandSec = 0; lastSeenSec = -999; seenTotalSec = 0; outNow = false; $('seenV').textContent = '—';
     $('pausesV').textContent = '0'; $('patternV').textContent = '—';
     $('bpm').textContent = '--'; $('bpm').classList.add('idle');
     show('tWatch'); sizeWave(); setStatus('wait', 'Getting ready');
@@ -2775,7 +2835,7 @@
   window.addEventListener('scroll', updateTopbar, { passive: true });
 
   // test hook so automated checks can read state (harmless in normal use)
-  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, band: lastBand, pm: pmBuf.length ? median(pmBuf) : 0, snoreSec, snoreNow, outNow, audioDrops, outOfBed: sessionLog ? sessionLog.outOfBed.slice() : null, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null }; } };
+  window.__echo = { get state() { return { armed, alarmOn, lastBreathAgo, running, simT, monState, seenSec, snr: lastSNR, band: lastBand, pm: pmBuf.length ? median(pmBuf) : 0, snoreSec, snoreNow, outNow, audioDrops, outOfBed: sessionLog ? sessionLog.outOfBed.slice() : null, clar: clarBuf.length ? median(clarBuf) : 0, pauses: sessionLog ? sessionLog.pauses.slice() : null, openPause: curPause ? [Math.round(curPause.s), Math.round(curPause.len)] : null }; } };
 
   // ---------------------------------------------------------------------------
   // Intro: a particle story that scrolls from night to morning.
