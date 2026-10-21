@@ -1438,6 +1438,7 @@
       sessionLog.states += bucket.p >= 10 ? 'p' : bucket.s + bucket.p >= 15 ? 's' : 'l';
       sessionLog.snore += bucket.z >= 5 ? '1' : '0';
       bucket = { s: 0, p: 0, l: 0, z: 0 };
+      autosave();
     }
     drawWave();
     if (tick % 5 === 0) updateRate();          // twice a second
@@ -1964,21 +1965,38 @@
   // ---------------------------------------------------------------------------
   // Session log (for the Reports tab)
   // ---------------------------------------------------------------------------
+  // Build the night's entry. final=false is a snapshot that changes nothing (used for the
+  // every-30-s autosave, so a dead battery or a closed tab doesn't lose the night).
+  function buildEntry(final) {
+    const s = sessionLog, now = sessTicks / SLOW_HZ;
+    const pauses = s.pauses.slice(), timeline = s.timeline.slice(), outOfBed = s.outOfBed.map(x => x.slice());
+    if (curPause) pauses.push([Math.round(curPause.s), Math.round(curPause.len), curPause.alarm ? 1 : 0]);
+    if (winRates.length) timeline.push([now, Math.round(median(winRates))]);
+    let states = s.states, snore = s.snore;
+    if (bucket.s + bucket.p + bucket.l >= 5) { states += bucket.p >= 10 ? 'p' : bucket.s + bucket.p >= (bucket.s + bucket.p + bucket.l) / 2 ? 's' : 'l'; snore += bucket.z >= 5 ? '1' : '0'; }
+    if (outNow) outOfBed.push([Math.round(outStart), null]);
+    const st = states.split('');   // mark out-of-bed stretches on the timeline
+    for (const [a, b] of outOfBed) for (let i = Math.floor(a / 30); i <= Math.min(st.length - 1, Math.floor((b ?? now) / 30)); i++) if (st[i] === 'l') st[i] = 'o';
+    return { id: s.start, start: s.start, durSec: Math.round(now),
+      timeline, pauses, alarms: s.alarms, waxWane: s.waxWane, sim: !!SIM, seenSec: Math.round(seenSec),
+      states: st.join(''), bandMed: bandSeen.length ? Math.round(median(bandSeen)) : null,
+      snore: analyser && !SIM ? snore : null, snoreMin: analyser && !SIM ? Math.round(snoreSec / 60) : null, outOfBed,
+      recovered: final ? undefined : true };
+  }
   function saveSession() {
-    closePause();
-    const s = sessionLog;
-    if (winRates.length) s.timeline.push([sessTicks / SLOW_HZ, Math.round(median(winRates))]);
-    if (bucket.s + bucket.p + bucket.l >= 5) { s.states += bucket.p >= 10 ? 'p' : bucket.s + bucket.p >= (bucket.s + bucket.p + bucket.l) / 2 ? 's' : 'l'; s.snore += bucket.z >= 5 ? '1' : '0'; }
-    if (outNow) s.outOfBed.push([Math.round(outStart), null]);
-    const st = s.states.split('');   // mark out-of-bed stretches on the timeline
-    for (const [a, b] of s.outOfBed) for (let i = Math.floor(a / 30); i <= Math.min(st.length - 1, Math.floor((b ?? sessTicks / SLOW_HZ) / 30)); i++) if (st[i] === 'l') st[i] = 'o';
-    s.states = st.join('');
-    const entry = finishSession({ id: s.start, start: s.start, durSec: Math.round(sessTicks / SLOW_HZ),
-      timeline: s.timeline, pauses: s.pauses, alarms: s.alarms, waxWane: s.waxWane, sim: !!SIM, seenSec: Math.round(seenSec),
-      states: s.states, bandMed: bandSeen.length ? Math.round(median(bandSeen)) : null,
-      snore: analyser && !SIM ? s.snore : null, snoreMin: analyser && !SIM ? Math.round(snoreSec / 60) : null, outOfBed: s.outOfBed });
+    const entry = finishSession(buildEntry(true));
+    curPause = null;
     saveSessions(loadSessions().concat([entry]));
+    store.set('live', null);
     selectedSessionId = entry.id;
+  }
+  function autosave() { if (sessionLog) try { store.set('live', buildEntry(false)); } catch (e) {} }
+  // A night that was still running when the page closed (battery died, Safari closed the tab):
+  // keep what was saved up to then.
+  function recoverNight() {
+    const live = store.get('live', null); if (!live || !live.durSec) return;
+    try { if (!loadSessions().some(x => x.id === live.id)) saveSessions(loadSessions().concat([finishSession(live)])); } catch (e) {}
+    store.set('live', null);
   }
 
   // ===========================================================================
@@ -3139,6 +3157,7 @@
   })();
   // greeting by time of day, and "2 of 4" on the setup cards
   function greet() { const h = new Date().getHours(); $('hello').textContent = h < 5 ? 'Late night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
+  recoverNight();
   greet(); setInterval(() => { if (!running) greet(); }, 60000);
   $('stepsRail').addEventListener('scroll', () => {
     const r = $('stepsRail'), cards = r.children, w = cards[0].offsetWidth + 12;
