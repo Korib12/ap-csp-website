@@ -51,7 +51,17 @@ People who want to know what their breathing does at night but have never had a 
 | Breath hold right after bumping the phone | Not logged (on purpose: Echo distrusts motion right after a jolt) |
 | Breath hold recorded on a phone with a weak mic | Not logged (signal too weak) |
 
-**Breathing-rate accuracy.** Early check against timed breathing (phone about 20 cm away, Oct 13): 10 → 10, 15 → 15, 30 → 29 breaths/min. The app now has a built-in **accuracy test** (Settings → testing tools): a breathing guide at 10, 15 and 20 breaths/min, 2 minutes each, that compares Echo's readings with the guide. *Results: to be added.*
+**Breathing-rate accuracy.** Early check against timed breathing (phone about 20 cm away, Oct 13): 10 → 10, 15 → 15, 30 → 29 breaths/min. The app has a built-in **accuracy test** (Settings → testing tools): a breathing guide at 10, 15 and 20 breaths/min, 2 minutes each, that compares the number Echo shows with the guide over the last 75 seconds of each step.
+
+Result (Oct 21, phone about 20 cm away, lying on the back, T-shirt):
+
+| Guide | Echo | Error | Breathing seen |
+|---|---|---|---|
+| 10 /min | 9.8 /min | −0.2 | 100% |
+| 15 /min | 14.9 /min | −0.1 | 100% |
+| 20 /min | 19.9 /min | −0.1 | 100% |
+
+Average error: 0.1 breaths/min. This is one person in one position; more people and positions are next.
 
 **Overnight (Oct 21, iPhone 15 Pro Max).** About 6 hours in two sessions (1:30–5:22 a.m. and 5:41–7:48 a.m.; the sleeper stopped and restarted it once). Echo ran the whole time without stopping or crashing.
 
