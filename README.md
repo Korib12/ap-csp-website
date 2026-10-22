@@ -60,7 +60,7 @@ People who want to know what their breathing does at night but have never had a 
 | 1:30–5:22 a.m. | 64% | 17 /min (typical 14–20) | 2 pauses (longest 19 s), 5 min of snoring |
 | 5:41–7:48 a.m. | 35% | 15 /min (typical 13–16) | Sleeper faced away from the phone, so Echo reported "can't see" instead of guessing. 17 min of snoring. |
 
-The sleeper does snore. Both reports also said "waxing-and-waning pattern: seen", which was a false alarm and led to the stricter rule above. *Battery used: to be added.*
+The sleeper does snore. Both reports also said "waxing-and-waning pattern: seen", which was a false alarm and led to the stricter rule above. Battery: about 35% over roughly 6 hours (around 6% per hour), mostly from keeping the screen on. A web page has to keep the screen awake to keep the sound playing.
 
 **Simulation.** `?sim=` modes (steady, irregular, pause, waxing-and-waning, rolls over, empty room, walks away, gets up) run 5+ minutes each: steady 97% seen, 3 of 3 pauses logged, 0 false pauses when rolling over, 0% seen in an empty room.
 
@@ -72,6 +72,12 @@ The sleeper does snore. Both reports also said "waxing-and-waning pattern: seen"
 - **Some people can hear the tone,** especially young people and pets.
 - **Phones differ.** One phone with a muffled mic gave a much weaker signal.
 - **Snoring and out-of-bed tracking are experimental.**
+
+## What's next
+
+- **A native phone app.** Native iPhone and Android apps can keep playing and listening with the screen off. That would cut battery use a lot and remove the need to keep the screen awake.
+- **Testing with more people,** including side sleepers and people who have had a sleep study, to compare Echo's results with a real test.
+- **Confirming the experimental features** (snoring, out of bed, waxing-and-waning) on real nights.
 
 ## Privacy
 
