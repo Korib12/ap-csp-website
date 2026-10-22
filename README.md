@@ -19,6 +19,10 @@ People who want to know what their breathing does at night but have never had a 
 |---|---|
 | **Tonight** | One tap to start. An aim check helps point the phone. Live breathing rate and breathing wave. A dim night screen. Echo saves the night every 30 seconds, so a dead battery or a closed tab doesn't lose it. |
 | **Reports** | A summary of each night: a one-sentence summary, a timeline of what Echo could see, the breathing rate through the night, pauses of 10 seconds or more, a data-confidence badge and a Share button. |
+| **Sleep Check** | "Should I get checked for sleep apnea?" Combines the last 3 good nights with 6 questions from NHLBI's list of sleep apnea signs and gives one next step: *nothing concerning in what Echo saw*, *worth mentioning to your doctor*, or *talk to a doctor about a sleep test*, with the reasons. Never a diagnosis. |
+| **Doctor summary** | A printable page (or PDF) in English to bring to an appointment: the nights, pauses per hour of breathing seen, snoring, the signs reported, Echo's suggestion and questions to ask. It says plainly what Echo can't measure, and uses no clinical index names Echo can't back up. |
+| **What affects breathing** | Tap what was different about a night (slept on side or back, stuffy nose, sick, alcohol, late meal). With 3+ nights each way, Trends compares snoring, pauses and breathing rate, with general, hedged tips. |
+| **Send to family** | One tap texts the family contact a short morning summary. |
 | **Trends** | Learns the person's normal nightly breathing rate and flags nights well above it. |
 | **Science view** | The raw echo (I/Q plane) and the breathing spectrum, live. |
 | **Get help nearby** | When to talk to a doctor and where to find low-cost help. |

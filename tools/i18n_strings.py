@@ -453,4 +453,9 @@ S = [
 ("These are patterns, not proof: other things change from night to night too.", "Son patrones, no pruebas: otras cosas también cambian de una noche a otra.", "这些只是规律，不是证据：每晚还有其他因素在变化。", "Đây là xu hướng, không phải bằng chứng: còn nhiều yếu tố khác thay đổi mỗi đêm."),
 ("These are patterns, not proof: other things change from night to night too. Using sample nights.", "Son patrones, no pruebas: otras cosas también cambian de una noche a otra. Usando noches de ejemplo.", "这些只是规律，不是证据：每晚还有其他因素在变化。正在使用示例夜晚。", "Đây là xu hướng, không phải bằng chứng: còn nhiều yếu tố khác thay đổi mỗi đêm. Đang dùng các đêm mẫu."),
 ("In each night's report, tap what was different (slept on side, alcohol, stuffy nose...). After a few tagged nights, Echo compares them here.", "En el informe de cada noche, toca lo que fue diferente (dormir de lado, alcohol, nariz tapada...). Después de algunas noches etiquetadas, Echo las compara aquí.", "在每晚的报告中，点选当晚有什么不同（侧睡、喝酒、鼻塞……）。标记几个晚上后，Echo 会在这里进行比较。", "Trong báo cáo mỗi đêm, hãy chạm vào điều khác biệt (ngủ nghiêng, uống rượu, nghẹt mũi...). Sau vài đêm có nhãn, Echo sẽ so sánh ở đây."),
+# Send to family
+("Send to family", "Enviar a la familia", "发送给家人", "Gửi cho gia đình"),
+("Text {x}", "Enviar mensaje a {x}", "发短信给{x}", "Nhắn tin cho {x}"),
+("Tip: add a family contact in Settings to text them in one tap.", "Consejo: agrega un contacto familiar en Ajustes para enviarle un mensaje con un toque.", "提示：在设置中添加家人联系人，即可一键发短信给他们。", "Mẹo: thêm liên hệ gia đình trong Cài đặt để nhắn tin chỉ với một chạm."),
+("Reports can text this person a short morning summary, and the alarm screen shows a button to call them.", "Los informes pueden enviar a esta persona un breve resumen por la mañana, y la pantalla de alarma muestra un botón para llamarla.", "报告可以给这个人发送简短的早晨摘要，警报画面会显示拨打其电话的按钮。", "Báo cáo có thể nhắn cho người này một bản tóm tắt ngắn vào buổi sáng, và màn hình báo động có nút để gọi họ."),
 ]
