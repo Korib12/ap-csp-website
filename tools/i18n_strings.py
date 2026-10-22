@@ -195,6 +195,8 @@ S = [
 ("Alarms: {#n}", "Alarmas: {n}", "报警次数：{n}", "Số lần báo động: {n}"),
 ("Waxing-and-waning pattern: seen", "Patrón creciente–decreciente: visto", "渐强渐弱模式：出现", "Kiểu thở tăng–giảm dần: có"),
 ("Waxing-and-waning pattern: not seen", "Patrón creciente–decreciente: no visto", "渐强渐弱模式：未出现", "Kiểu thở tăng–giảm dần: không có"),
+("Waxing-and-waning pattern (experimental): seen", "Patrón creciente–decreciente (experimental): visto", "渐强渐弱模式（实验性）：出现", "Kiểu thở tăng–giảm dần (thử nghiệm): có"),
+("Waxing-and-waning pattern (experimental): not seen", "Patrón creciente–decreciente (experimental): no visto", "渐强渐弱模式（实验性）：未出现", "Kiểu thở tăng–giảm dần (thử nghiệm): không có"),
 ("Above normal: {#r} vs a usual {#b} breaths/min, 2 nights in a row", "Por encima de lo normal: {r} frente a las {b} respiraciones/min habituales, 2 noches seguidas", "高于平时：每分钟 {r} 次，平时为 {b} 次，已连续 2 晚", "Cao hơn bình thường: {r} so với mức thường lệ {b} lần/phút, 2 đêm liên tiếp"),
 ("Above normal: {#r} vs a usual {#b} breaths/min", "Por encima de lo normal: {r} frente a las {b} respiraciones/min habituales", "高于平时：每分钟 {r} 次，平时为 {b} 次", "Cao hơn bình thường: {r} so với mức thường lệ {b} lần/phút"),
 ("Within this person's normal range", "Dentro del rango normal de esta persona", "在此人的正常范围内", "Trong khoảng bình thường của người này"),

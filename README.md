@@ -23,6 +23,7 @@ People who want to know what their breathing does at night but have never had a 
 | **Science view** | The raw echo (I/Q plane) and the breathing spectrum, live. |
 | **Get help nearby** | When to talk to a doctor and where to find low-cost help. |
 | **Languages** | English, Spanish, Chinese (Simplified and Traditional) and Vietnamese. Translations are machine-made and still need a native-speaker check. |
+| **Waxing-and-waning pattern** *(experimental)* | Breathing that repeatedly grows deeper, shallower, then pauses. Only counted while Echo can see breathing for 80%+ of a 4-minute window, and only reported after it shows up for 5 minutes in total. The first overnight test showed the old rule fired on noise (it also fired on 4 of 17 short test recordings, including an empty room); the new rule fires on none of them and still catches the simulated pattern. |
 | **Snoring** *(experimental)* | Regular bursts of low, loud sound. Only tested on synthetic audio so far. |
 | **Out of bed or out of view** *(experimental)* | 90 seconds without seeing breathing after a stretch of clear breathing. Tested in simulation and on short real recordings. |
 
@@ -52,7 +53,14 @@ People who want to know what their breathing does at night but have never had a 
 
 **Breathing-rate accuracy.** Early check against timed breathing (phone about 20 cm away, Oct 13): 10 → 10, 15 → 15, 30 → 29 breaths/min. The app now has a built-in **accuracy test** (Settings → testing tools): a breathing guide at 10, 15 and 20 breaths/min, 2 minutes each, that compares Echo's readings with the guide. *Results: to be added.*
 
-**Overnight.** *To be added: a full night on an iPhone 15 Pro Max (does it keep running, battery used, how much of the night Echo could see).*
+**Overnight (Oct 21, iPhone 15 Pro Max).** About 6 hours in two sessions (1:30–5:22 a.m. and 5:41–7:48 a.m.; the sleeper stopped and restarted it once). Echo ran the whole time without stopping or crashing.
+
+| Session | Breathing seen | Average rate | Notes |
+|---|---|---|---|
+| 1:30–5:22 a.m. | 64% | 17 /min (typical 14–20) | 2 pauses (longest 19 s), 5 min of snoring |
+| 5:41–7:48 a.m. | 35% | 15 /min (typical 13–16) | Sleeper faced away from the phone, so Echo reported "can't see" instead of guessing. 17 min of snoring. |
+
+The sleeper does snore. Both reports also said "waxing-and-waning pattern: seen", which was a false alarm and led to the stricter rule above. *Battery used: to be added.*
 
 **Simulation.** `?sim=` modes (steady, irregular, pause, waxing-and-waning, rolls over, empty room, walks away, gets up) run 5+ minutes each: steady 97% seen, 3 of 3 pauses logged, 0 false pauses when rolling over, 0% seen in an empty room.
 
