@@ -499,4 +499,5 @@ S = [
 ("real recordings, tested in real rooms", "grabaciones reales, probadas en habitaciones reales", "段真实录音，在真实房间中测试", "bản ghi thật, được thử trong phòng thật"),
 ("overnight tests", "pruebas nocturnas", "次整晚测试", "lần thử qua đêm"),
 ("full run through, validated, and no crashes", "completas de principio a fin, verificadas y sin fallos", "完整运行、经过验证、没有崩溃", "chạy trọn vẹn, đã kiểm chứng và không bị lỗi"),
+("Nearly that many adults worldwide have obstructive sleep apnea.", "Casi esa cantidad de adultos en el mundo tiene apnea obstructiva del sueño.", "全球有近这么多成年人患有阻塞性睡眠呼吸暂停。", "Gần chừng ấy người trưởng thành trên thế giới bị ngưng thở khi ngủ do tắc nghẽn."),
 ]

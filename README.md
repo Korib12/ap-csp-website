@@ -127,7 +127,7 @@ python3 -m http.server 8000      # then open http://localhost:8000/app/
 
 ## Sources (facts used in the app and video)
 
-- Benjafield AV et al. Estimation of the global prevalence and burden of obstructive sleep apnoea. *The Lancet Respiratory Medicine*, 2019. https://pubmed.ncbi.nlm.nih.gov/31300334/ (936 million adults aged 30–69 worldwide)
+- Benjafield AV et al. Estimation of the global prevalence and burden of obstructive sleep apnoea. *The Lancet Respiratory Medicine*, 2019. https://pubmed.ncbi.nlm.nih.gov/31300334/ (936 million adults aged 30–69 worldwide, shown in the app as nearly 1 billion)
 - American Academy of Sleep Medicine and Frost & Sullivan. Hidden health crisis costing America billions, 2016. https://aasm.org/resources/pdf/sleep-apnea-economic-crisis.pdf (29.4 million U.S. adults; 23.5 million undiagnosed; $149.6 billion a year)
 - American Medical Association. What doctors want patients to know about sleep apnea, 2025. https://www.ama-assn.org/public-health/prevention-wellness/what-doctors-wish-patients-knew-about-sleep-apnea (about 30 million in the U.S.; builds over years; alcohol and body position; links to heart attacks and strokes)
 - National Heart, Lung, and Blood Institute. Sleep apnea symptoms. https://www.nhlbi.nih.gov/health/sleep-apnea/symptoms (the signs, and the Sleep Check questions)
