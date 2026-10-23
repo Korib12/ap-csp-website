@@ -495,4 +495,8 @@ S = [
 ("Waking up often to use the bathroom", "Despertarse a menudo para ir al baño", "夜里经常醒来上厕所", "Hay thức dậy để đi vệ sinh"),
 ("It can build for years before anyone notices. Untreated, it's linked to heart attacks, strokes and high blood pressure.", "Puede desarrollarse durante años antes de que alguien lo note. Sin tratamiento, se asocia con infartos, derrames cerebrales y presión arterial alta.", "它可能持续多年而无人察觉。如果不治疗，它与心脏病发作、中风和高血压有关。", "Nó có thể tiến triển nhiều năm trước khi ai đó nhận ra. Nếu không điều trị, nó liên quan đến đau tim, đột quỵ và huyết áp cao."),
 ("Sources: National Heart, Lung, and Blood Institute; Johns Hopkins Medicine; American Medical Association (2025).", "Fuentes: National Heart, Lung, and Blood Institute; Johns Hopkins Medicine; American Medical Association (2025).", "来源：美国国家心肺血液研究所；约翰斯·霍普金斯医学；美国医学会（2025）。", "Nguồn: National Heart, Lung, and Blood Institute; Johns Hopkins Medicine; American Medical Association (2025)."),
+# Intro proof (edited by the author)
+("real recordings, tested in real rooms", "grabaciones reales, probadas en habitaciones reales", "段真实录音，在真实房间中测试", "bản ghi thật, được thử trong phòng thật"),
+("overnight tests", "pruebas nocturnas", "次整晚测试", "lần thử qua đêm"),
+("full run through, validated, and no crashes", "completas de principio a fin, verificadas y sin fallos", "完整运行、经过验证、没有崩溃", "chạy trọn vẹn, đã kiểm chứng và không bị lỗi"),
 ]
