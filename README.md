@@ -44,7 +44,7 @@ People who want to know what their breathing does at night but have never had a 
 
 ## How we tested it
 
-**Real recordings.** 17 raw recordings (the last 4 minutes of the echo) from real rooms are in [`data/recordings/`](data/recordings/). They cover breathing at 10–40 cm, T-shirt and hoodies, empty rooms, a misaimed phone, rolling over, leaving the room and breath holds. Every change to the breathing engine is replayed against all of them with `tools/replay.js`.
+**Real recordings.** We made 51+ real recordings. Here are some of the raw recording files: 18 of them (the last 4 minutes of the echo each) are in [`data/recordings/`](data/recordings/), and 17 of those are replayed with `tools/replay.js` after every change to the breathing engine. They cover breathing at 10–40 cm, T-shirt and hoodies, empty rooms, a misaimed phone, rolling over, leaving the room and breath holds. Every change to the breathing engine is replayed against all of them with `tools/replay.js`.
 
 | Test | Result |
 |---|---|
@@ -66,6 +66,8 @@ Result (Oct 21, phone about 20 cm away, lying on the back, T-shirt):
 | 20 /min | 19.9 /min | −0.1 | 100% |
 
 Average error: 0.1 breaths/min. This is one person in one position; more people and positions are next.
+
+**Overnight.** 5 full overnight tests ran with no crashes. The first one in detail:
 
 **Overnight (Oct 21, iPhone 15 Pro Max).** About 6 hours in two sessions (1:30–5:22 a.m. and 5:41–7:48 a.m.; the sleeper stopped and restarted it once). Echo ran the whole time without stopping or crashing.
 
